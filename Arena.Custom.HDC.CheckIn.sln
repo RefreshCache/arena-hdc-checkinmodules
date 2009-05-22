@@ -1,0 +1,69 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arena.Custom.HDC.CheckIn", "Library\Arena.Custom.HDC.CheckIn.csproj", "{577EBF7B-4689-4926-92B3-FCDECB419BF8}"
+EndProject
+Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "UserControls", "UserControls\", "{AFB0DB1E-A315-40DE-A3E0-F170EE145900}"
+	ProjectSection(WebsiteProperties) = preProject
+		SccProjectName = "Svn"
+		SccAuxPath = "Svn"
+		SccLocalPath = "Svn"
+		SccProvider = "SubversionScc"
+		TargetFramework = "3.5"
+		ProjectReferences = ""
+		Debug.AspNetCompiler.VirtualPath = "/UserControls"
+		Debug.AspNetCompiler.PhysicalPath = "UserControls\"
+		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\UserControls\"
+		Debug.AspNetCompiler.Updateable = "true"
+		Debug.AspNetCompiler.ForceOverwrite = "true"
+		Debug.AspNetCompiler.FixedNames = "false"
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.VirtualPath = "/UserControls"
+		Release.AspNetCompiler.PhysicalPath = "UserControls\"
+		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\UserControls\"
+		Release.AspNetCompiler.Updateable = "true"
+		Release.AspNetCompiler.ForceOverwrite = "true"
+		Release.AspNetCompiler.FixedNames = "false"
+		Release.AspNetCompiler.Debug = "False"
+		VWDPort = "4557"
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SubversionScc) = preSolution
+		Svn-Managed = True
+		Manager = AnkhSVN - Subversion Support for Visual Studio
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|.NET = Debug|.NET
+		Debug|Any CPU = Debug|Any CPU
+		Debug|Mixed Platforms = Debug|Mixed Platforms
+		Release|.NET = Release|.NET
+		Release|Any CPU = Release|Any CPU
+		Release|Mixed Platforms = Release|Mixed Platforms
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{577EBF7B-4689-4926-92B3-FCDECB419BF8}.Debug|.NET.ActiveCfg = Debug|Any CPU
+		{577EBF7B-4689-4926-92B3-FCDECB419BF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{577EBF7B-4689-4926-92B3-FCDECB419BF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{577EBF7B-4689-4926-92B3-FCDECB419BF8}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{577EBF7B-4689-4926-92B3-FCDECB419BF8}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{577EBF7B-4689-4926-92B3-FCDECB419BF8}.Release|.NET.ActiveCfg = Release|Any CPU
+		{577EBF7B-4689-4926-92B3-FCDECB419BF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{577EBF7B-4689-4926-92B3-FCDECB419BF8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{577EBF7B-4689-4926-92B3-FCDECB419BF8}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{577EBF7B-4689-4926-92B3-FCDECB419BF8}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{AFB0DB1E-A315-40DE-A3E0-F170EE145900}.Debug|.NET.ActiveCfg = Debug|.NET
+		{AFB0DB1E-A315-40DE-A3E0-F170EE145900}.Debug|.NET.Build.0 = Debug|.NET
+		{AFB0DB1E-A315-40DE-A3E0-F170EE145900}.Debug|Any CPU.ActiveCfg = Debug|.NET
+		{AFB0DB1E-A315-40DE-A3E0-F170EE145900}.Debug|Mixed Platforms.ActiveCfg = Debug|.NET
+		{AFB0DB1E-A315-40DE-A3E0-F170EE145900}.Debug|Mixed Platforms.Build.0 = Debug|.NET
+		{AFB0DB1E-A315-40DE-A3E0-F170EE145900}.Release|.NET.ActiveCfg = Debug|.NET
+		{AFB0DB1E-A315-40DE-A3E0-F170EE145900}.Release|.NET.Build.0 = Debug|.NET
+		{AFB0DB1E-A315-40DE-A3E0-F170EE145900}.Release|Any CPU.ActiveCfg = Debug|.NET
+		{AFB0DB1E-A315-40DE-A3E0-F170EE145900}.Release|Mixed Platforms.ActiveCfg = Debug|.NET
+		{AFB0DB1E-A315-40DE-A3E0-F170EE145900}.Release|Mixed Platforms.Build.0 = Debug|.NET
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

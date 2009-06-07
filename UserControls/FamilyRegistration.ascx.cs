@@ -73,9 +73,6 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             }
 
             Build_Page(!IsPostBack);
-//            Build_Page(true);
-//            if (ViewState.Count > 0)
-//                tbFindPhone.Text = ViewState.Keys.GetEnumerator().Current.ToString();
         }
 
         /// <summary>
@@ -293,12 +290,12 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     //
                     // Add in the gender.
                     //
-                    row.Cells.Add(TableCellString(p.Gender.ToString()));
+                    row.Cells.Add(TableCellString(null, p.Gender.ToString()));
 
                     //
                     // Add in the age.
                     //
-                    row.Cells.Add(TableCellString((p.Age != -1 ? p.Age.ToString() : "")));
+                    row.Cells.Add(TableCellString(null, (p.Age != -1 ? p.Age.ToString() : "")));
 
                     //
                     // Add in the Main/Home phone number.
@@ -307,17 +304,17 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     if (phone != null && phone.Number != "")
                     {
                         if (phone.Unlisted)
-                            row.Cells.Add(TableCellString("(unlisted)"));
+                            row.Cells.Add(TableCellString(null, "(unlisted)"));
                         else
-                            row.Cells.Add(TableCellString(phone.Number));
+                            row.Cells.Add(TableCellString(null, phone.Number));
                     }
                     else
-                        row.Cells.Add(TableCellString(""));
+                        row.Cells.Add(TableCellString(null, ""));
 
                     //
                     // Add in the e-mail address.
                     //
-                    row.Cells.Add(TableCellString(p.Emails.FirstActive));
+                    row.Cells.Add(TableCellString(null, p.Emails.FirstActive));
 
                     phSearchResults.Controls.Add(row);
                 }
@@ -352,6 +349,8 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     row.Cells.Add(TableCellTextBox("tbMemberFirstName_" + i.ToString(), (SetValues ? fm.FirstName : null), 75));
                     row.Cells.Add(TableCellTextBox("tbMemberLastName_" + i.ToString(), (SetValues ? fm.LastName : null), 110));
                     row.Cells.Add(TableCellLookupDropDownList("ddlMemberFamilyRole_" + i.ToString(), new Guid("d3ce5e62-4ef2-4ff8-a80d-5492bf995459"), (SetValues ? fm.FamilyRole.LookupID.ToString() : null), true));
+                    list = (DropDownList)row.Cells[row.Cells.Count - 1].Controls[0];
+                    list.Attributes["onchange"] = "hdc_toggleFamilyAttributes();";
                     row.Cells.Add(TableCellDateTextBox("dtbMemberBirthDate_" + i.ToString(), (SetValues ? fm.BirthDate.ToString("MM/dd/yyyy") : null)));
                     row.Cells.Add(TableCellEnumDropDownList("ddlMemberGender_" + i.ToString(), typeof(Arena.Enums.Gender), (SetValues ? fm.Gender.ToString() : null)));
                     row.Cells.Add(TableCellLookupDropDownList("ddlMemberStatus_" + i.ToString(), new Guid("0b4532db-3188-40f5-b188-e7e6e4448c85"), (SetValues ? fm.MemberStatus.LookupID.ToString() : null), true));
@@ -372,7 +371,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     //
                     email = (fm.Emails.FirstActive != null ? fm.Emails.FirstActive : "");
                     row.Cells.Add(new HtmlTableCell());
-                    cell = TableCellString("Email&nbsp;&nbsp;");
+                    cell = TableCellString("textMemberEmail_" + i.ToString(), "Email&nbsp;&nbsp;");
                     cell.Align = "right";
                     cell.Style.Add("font-weight", "bold");
                     row.Cells.Add(cell);
@@ -382,7 +381,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     // Grade
                     //
                     grade = Person.CalculateGradeLevel(fm.GraduationDate, CurrentOrganization.GradePromotionDate).ToString();
-                    cell = TableCellString("Grade&nbsp;&nbsp;");
+                    cell = TableCellString("textMemberGrade_" + i.ToString(), "Grade&nbsp;&nbsp;");
                     cell.Align = "right";
                     cell.Style.Add("font-weight", "bold");
                     row.Cells.Add(cell);
@@ -411,6 +410,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             }
 
             BuildExtraRows(SetValues);
+            Page.ClientScript.RegisterStartupScript(typeof(Page), "hdc_toggleFamilyAttributes", "<script>hdc_toggleFamilyAttributes();</script>");
         }
 
         /// <summary>
@@ -420,6 +420,8 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         private void BuildExtraRows(bool SetValues)
         {
             HtmlTableRow row;
+            HtmlTableCell cell;
+            DropDownList list;
             Family f;
             int i, totalRows;
 
@@ -440,13 +442,17 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             // user has already entered. If this is updated it also needs to be
             // updated in the Build_Page() method.
             //
-            for (i = phFamilyMembers.Controls.Count; i < totalRows; i++)
+            for (i = (phFamilyMembers.Controls.Count / 2); i < totalRows; i++)
             {
                 row = new HtmlTableRow();
+                row.Height = "25";
+                row.VAlign = "top";
                 row.Cells.Add(TableCellLookupDropDownList("ddlMemberTitle_" + i.ToString(), new Guid("3394ca53-5791-42c8-b996-1d77c740cf03"), (SetValues ? "" : null), false));
                 row.Cells.Add(TableCellTextBox("tbMemberFirstName_" + i.ToString(), (SetValues ? "" : null), 75));
                 row.Cells.Add(TableCellTextBox("tbMemberLastName_" + i.ToString(), (SetValues ? "" : null), 110));
                 row.Cells.Add(TableCellLookupDropDownList("ddlMemberFamilyRole_" + i.ToString(), new Guid("d3ce5e62-4ef2-4ff8-a80d-5492bf995459"), (SetValues ? "" : null), true));
+                list = (DropDownList)row.Cells[row.Cells.Count - 1].Controls[0];
+                list.Attributes["onchange"] = "hdc_toggleFamilyAttributes();";
                 row.Cells.Add(TableCellDateTextBox("dtbMemberBirthDate_" + i.ToString(), (SetValues ? "" : null)));
                 row.Cells.Add(TableCellEnumDropDownList("ddlMemberGender_" + i.ToString(), typeof(Arena.Enums.Gender), (SetValues ? "" : null)));
                 row.Cells.Add(TableCellLookupDropDownList("ddlMemberStatus_" + i.ToString(), new Guid("0b4532db-3188-40f5-b188-e7e6e4448c85"), (SetValues ? "" : null), true));
@@ -454,6 +460,53 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 row.Cells.Add(TableCellDateTextBox("dtbMemberAnniversaryDate_" + i.ToString(), (SetValues ? "" : null)));
 
                 phFamilyMembers.Controls.Add(row);
+
+                //
+                // Add another row for the extra information that will appear
+                // and disappear depending on first-row selections.
+                //
+                row = new HtmlTableRow();
+                row.Height = "30";
+                row.VAlign = "top";
+                phFamilyMembers.Controls.Add(row);
+
+                //
+                // Email Address.
+                //
+                row.Cells.Add(new HtmlTableCell());
+                cell = TableCellString("textMemberEmail_" + i.ToString(), "Email&nbsp;&nbsp;");
+                cell.Align = "right";
+                cell.Style.Add("font-weight", "bold");
+                row.Cells.Add(cell);
+                row.Cells.Add(TableCellTextBox("tbMemberEmail_" + i.ToString(), null, 110));
+
+                //
+                // Grade
+                //
+                cell = TableCellString("textMemberGrade_" + i.ToString(), "Grade&nbsp;&nbsp;");
+                cell.Align = "right";
+                cell.Style.Add("font-weight", "bold");
+                row.Cells.Add(cell);
+                cell = new HtmlTableCell();
+                list = new DropDownList();
+                cell.Controls.Add(list);
+                list.Items.Add(new ListItem("", "-1"));
+                list.Items.Add(new ListItem("Kindergarten", "0"));
+                list.Items.Add(new ListItem("1st", "1"));
+                list.Items.Add(new ListItem("2nd", "2"));
+                list.Items.Add(new ListItem("3rd", "3"));
+                list.Items.Add(new ListItem("4th", "4"));
+                list.Items.Add(new ListItem("5th", "5"));
+                list.Items.Add(new ListItem("6th", "6"));
+                list.Items.Add(new ListItem("7th", "7"));
+                list.Items.Add(new ListItem("8th", "8"));
+                list.Items.Add(new ListItem("9th", "9"));
+                list.Items.Add(new ListItem("10th", "10"));
+                list.Items.Add(new ListItem("11th", "11"));
+                list.Items.Add(new ListItem("12th", "12"));
+                list.CssClass = "smallText";
+                list.ID = "ddlMemberGrade_" + i.ToString();
+                row.Cells.Add(cell);
             }
         }
 
@@ -463,7 +516,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         /// </summary>
         /// <param name="value">The string to display inside the cell.</param>
         /// <returns>A new TableCell containing the given string.</returns>
-        private HtmlTableCell TableCellString(string value)
+        private HtmlTableCell TableCellString(string controlId, string value)
         {
             Label label;
             HtmlTableCell cell = new HtmlTableCell();
@@ -472,6 +525,8 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             label = new Label();
             label.CssClass = "smallText";
             label.Text = value;
+            if (controlId != null)
+                label.ID = controlId;
             cell.Controls.Add(label);
 
             return cell;

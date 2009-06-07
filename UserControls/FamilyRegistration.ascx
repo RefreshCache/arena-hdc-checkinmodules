@@ -27,6 +27,42 @@ function hideFindFamilyContent()
     document.getElementById('findFamilyExpanded').style.display = 'none';
     document.getElementById('findFamilyCollapsed').style.display = 'table';
 }
+
+function hdc_toggleFamilyAttributes()
+{
+    var i, role, x, value, grade, gradeHeader, email, emailHeader, lead;
+
+    for (i = 0; document.forms[0].length; i++)
+    {
+        role = document.forms[0].elements[i];
+        if (role == null)
+            break;
+
+        if (role.id.indexOf('ddlMemberFamilyRole_') != -1)
+        {
+            lead = role.id.split('ddlMember')[0];
+            value = role.options[role.selectedIndex].text;
+            x = role.id.split('Role_')[1];
+
+            grade = document.getElementById(lead + 'ddlMemberGrade_' + x);
+            gradeHeader = document.getElementById(lead + 'textMemberGrade_' + x);
+            email = document.getElementById(lead + 'tbMemberEmail_' + x);
+            emailHeader = document.getElementById(lead + 'textMemberEmail_' + x);
+
+//            alert(x + '=' + value);
+            if (value == 'Child')
+            {
+                grade.style.display = 'inline';
+                gradeHeader.style.display = 'inline';
+            }
+            else
+            {
+                grade.style.display = 'none';
+                gradeHeader.style.display = 'none';
+            }
+        }
+    }
+}
 </script>
 
 <asp:Panel id="pnlFindFamily" runat="server" Visible="false" Width="100%">

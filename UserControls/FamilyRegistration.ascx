@@ -1,8 +1,8 @@
 <%@ Control Language="C#" AutoEventWireup="true" CodeFile="FamilyRegistration.ascx.cs" Inherits="ArenaWeb.UserControls.Custom.HDC.CheckIn.FamilyRegistration" %>
 <%@ Register TagPrefix="Arena" Namespace="Arena.Portal.UI" Assembly="Arena.Portal.UI" %>
 
-<asp:HiddenField ID="hfFindName" runat="server" />
-<asp:HiddenField ID="hfFindPhone" runat="server" />
+<asp:HiddenField ID="hfGradeRoleIDs" runat="server" />
+<asp:HiddenField ID="hfEmailRoleIDs" runat="server" />
 <asp:HiddenField ID="hfFamily" runat="server" />
 <asp:HiddenField ID="hfExtraCount" runat="server" Value="0" />
 <asp:HiddenField ID="hfStage" runat="server" />
@@ -28,9 +28,45 @@ function hideFindFamilyContent()
     document.getElementById('findFamilyCollapsed').style.display = 'table';
 }
 
+function hdc_getElementById(elementID)
+{
+    var i, obj, form = document.forms[0];
+
+
+    for (i = 0; i < form.length; i++)
+    {
+        obj = form.elements[i];
+        if (obj == null)
+            break;
+        
+        if (obj.id.indexOf(elementID) != -1)
+            return obj;
+    }
+
+    return null;
+}
+
+function hdc_inarray(arrayObj, value)
+{
+    var i;
+    
+    for (i = 0; i < arrayObj.length; i++)
+    {
+        if (arrayObj[i] == value)
+            return true;
+    }
+    
+    return false;
+}
+
 function hdc_toggleFamilyAttributes()
 {
-    var i, role, x, value, grade, gradeHeader, email, emailHeader, lead;
+    var i, role, x, value, lead;
+    var grade, gradeHeader, email, emailHeader, anniversary, anniversaryCal;
+    var gradeRoles, emailRoles;
+
+    emailRoles = hdc_getElementById('hfEmailRoleIDs').value.split(',');
+    gradeRoles = hdc_getElementById('hfGradeRoleIDs').value.split(',');
 
     for (i = 0; document.forms[0].length; i++)
     {
@@ -41,16 +77,31 @@ function hdc_toggleFamilyAttributes()
         if (role.id.indexOf('ddlMemberFamilyRole_') != -1)
         {
             lead = role.id.split('ddlMember')[0];
-            value = role.options[role.selectedIndex].text;
+            value = role.options[role.selectedIndex].value;
             x = role.id.split('Role_')[1];
 
+            //
+            // Handle anniversary date.
+            //
+            anniversary = document.getElementById(lead + 'dtbMemberAnniversaryDate_' + x);
+            anniversaryCal = document.getElementById(lead + 'dtbMemberAnniversaryDate_' + x + '_calImage');
+            if (role.options[role.selectedIndex].text.toLowerCase() == 'adult')
+            {
+                anniversary.style.display = 'inline';
+                anniversaryCal.style.display = 'inline';
+            }
+            else
+            {
+                anniversary.style.display = 'none';
+                anniversaryCal.style.display = 'none';
+            }
+
+            //
+            // Handle grades.
+            //
             grade = document.getElementById(lead + 'ddlMemberGrade_' + x);
             gradeHeader = document.getElementById(lead + 'textMemberGrade_' + x);
-            email = document.getElementById(lead + 'tbMemberEmail_' + x);
-            emailHeader = document.getElementById(lead + 'textMemberEmail_' + x);
-
-//            alert(x + '=' + value);
-            if (value == 'Child')
+            if (hdc_inarray(gradeRoles, value))
             {
                 grade.style.display = 'inline';
                 gradeHeader.style.display = 'inline';
@@ -59,6 +110,22 @@ function hdc_toggleFamilyAttributes()
             {
                 grade.style.display = 'none';
                 gradeHeader.style.display = 'none';
+            }
+
+            //
+            // Handle e-mail addresses.
+            //
+            email = document.getElementById(lead + 'tbMemberEmail_' + x);
+            emailHeader = document.getElementById(lead + 'textMemberEmail_' + x);
+            if (hdc_inarray(emailRoles, value))
+            {
+                email.style.display = 'inline';
+                emailHeader.style.display = 'inline';
+            }
+            else
+            {
+                email.style.display = 'none';
+                emailHeader.style.display = 'none';
             }
         }
     }

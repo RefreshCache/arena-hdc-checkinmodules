@@ -49,6 +49,16 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         [NumericSetting("Add More Count", "The number of blank member entries to add each time the Add More button is clicked. The default is 2.", false)]
         public int AddMoreCountSetting { get { return Convert.ToInt32(Setting("AddMoreCount", "2", false)); } }
 
+        [ListFromSqlSetting("Grade Family Roles", "The family roles that you want grades to be entered for.", false, "",
+            "SELECT [cl].[lookup_id],[cl].[lookup_value] FROM [core_lookup] AS [cl] LEFT JOIN [core_lookup_type] AS [clt] ON [clt].[lookup_type_id]=[cl].[lookup_type_id] WHERE [clt].[guid]='D3CE5E62-4EF2-4FF8-A80D-5492BF995459' ORDER BY [cl].[lookup_order]",
+            ListSelectionMode.Multiple)]
+        public string GradeFamilyRoleIDsSetting { get { return Setting("GradeFamilyRoleIDs", "", false); } }
+
+        [ListFromSqlSetting("Email Family Roles", "The family roles that you want email addresses to be entered for.", false, "",
+            "SELECT [cl].[lookup_id],[cl].[lookup_value] FROM [core_lookup] AS [cl] LEFT JOIN [core_lookup_type] AS [clt] ON [clt].[lookup_type_id]=[cl].[lookup_type_id] WHERE [clt].[guid]='D3CE5E62-4EF2-4FF8-A80D-5492BF995459' ORDER BY [cl].[lookup_order]",
+            ListSelectionMode.Multiple)]
+        public string EmailFamilyRoleIDsSetting { get { return Setting("EmailFamilyRoleIDs", "", false); } }
+
         #endregion
 
         #region Event Handlers
@@ -70,6 +80,12 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 Utilities.LoadCountries(ddlAddressCountry);
                 if (CountryCodeSetting != null && CountryCodeSetting != "")
                     ddlAddressCountry.SelectedValue = CountryCodeSetting;
+
+                //
+                // Set the family roles.
+                //
+                hfGradeRoleIDs.Value = GradeFamilyRoleIDsSetting.Trim();
+                hfEmailRoleIDs.Value = EmailFamilyRoleIDsSetting.Trim();
             }
 
             Build_Page(!IsPostBack);
@@ -83,8 +99,6 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         /// <param name="e">ignored</param>
         void btnSearch_Click(object sender, EventArgs e)
         {
-            hfFindName.Value = tbFindName.Text;
-            hfFindPhone.Value = tbFindPhone.Text;
             pnlFindResults.Visible = true;
             pnlFamily.Visible = false;
         }
@@ -104,8 +118,6 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             Person p;
 
             p = new Person(Convert.ToInt32(button.ID.Substring(9)));
-            hfFindName.Value = "";
-            hfFindPhone.Value = "";
             hfFamily.Value = p.FamilyId.ToString();
             hfExtraCount.Value = "0";
             pnlFindResults.Visible = false;
@@ -362,7 +374,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     // and disappear depending on first-row selections.
                     //
                     row = new HtmlTableRow();
-                    row.Height = "30";
+                    row.Height = "40";
                     row.VAlign = "top";
                     phFamilyMembers.Controls.Add(row);
 
@@ -422,6 +434,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             HtmlTableRow row;
             HtmlTableCell cell;
             DropDownList list;
+            Lookup lu;
             Family f;
             int i, totalRows;
 
@@ -444,13 +457,28 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             for (i = (phFamilyMembers.Controls.Count / 2); i < totalRows; i++)
             {
+                //
+                // Determine if we are adding a new adult row or child row.
+                //
+                if (i < 2)
+                {
+                    lu = new Lookup(new Guid("E410E1A6-8715-4BFB-BF03-1CD18051F815"));
+                }
+                else
+                {
+                    lu = new Lookup(new Guid("9EF9E984-923C-4206-A2CF-17ADAF2E6659"));
+                }
+
+                //
+                // Build the primary data row.
+                //
                 row = new HtmlTableRow();
                 row.Height = "25";
                 row.VAlign = "top";
                 row.Cells.Add(TableCellLookupDropDownList("ddlMemberTitle_" + i.ToString(), new Guid("3394ca53-5791-42c8-b996-1d77c740cf03"), (SetValues ? "" : null), false));
                 row.Cells.Add(TableCellTextBox("tbMemberFirstName_" + i.ToString(), (SetValues ? "" : null), 75));
-                row.Cells.Add(TableCellTextBox("tbMemberLastName_" + i.ToString(), (SetValues ? "" : null), 110));
-                row.Cells.Add(TableCellLookupDropDownList("ddlMemberFamilyRole_" + i.ToString(), new Guid("d3ce5e62-4ef2-4ff8-a80d-5492bf995459"), (SetValues ? "" : null), true));
+                row.Cells.Add(TableCellTextBox("tbMemberLastName_" + i.ToString(), (SetValues ? tbFamilyName.Text : null), 110));
+                row.Cells.Add(TableCellLookupDropDownList("ddlMemberFamilyRole_" + i.ToString(), new Guid("d3ce5e62-4ef2-4ff8-a80d-5492bf995459"), (SetValues ? lu.LookupID.ToString() : null), true));
                 list = (DropDownList)row.Cells[row.Cells.Count - 1].Controls[0];
                 list.Attributes["onchange"] = "hdc_toggleFamilyAttributes();";
                 row.Cells.Add(TableCellDateTextBox("dtbMemberBirthDate_" + i.ToString(), (SetValues ? "" : null)));
@@ -466,7 +494,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 // and disappear depending on first-row selections.
                 //
                 row = new HtmlTableRow();
-                row.Height = "30";
+                row.Height = "40";
                 row.VAlign = "top";
                 phFamilyMembers.Controls.Add(row);
 

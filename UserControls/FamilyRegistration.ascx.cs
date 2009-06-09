@@ -59,6 +59,9 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             ListSelectionMode.Multiple)]
         public string EmailFamilyRoleIDsSetting { get { return Setting("EmailFamilyRoleIDs", "", false); } }
 
+        [LookupSetting("New Member Status", "The member status given to new members added through this module.", true, "0b4532db-3188-40f5-b188-e7e6e4448c85")]
+        public Lookup NewMemberStatusSetting { get { return new Lookup(Convert.ToInt32(Setting("NewMemberStatus", "", true))); } }
+
         #endregion
 
         #region Event Handlers
@@ -155,9 +158,15 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             }
             pp = p.Phones.FindByType(new Guid("f2a0fba2-d5ab-421f-a5ab-0c67db6fd72e"));
             if (pp != null && pp.PersonID != -1)
+            {
                 tbMainPhone.PhoneNumber = pp.Number;
+                cbMainPhoneUnlisted.Checked = pp.Unlisted;
+            }
             else
+            {
                 tbMainPhone.PhoneNumber = "";
+                cbMainPhoneUnlisted.Checked = false;
+            }
 
             //
             // Rebuild the normal page.
@@ -248,24 +257,58 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     // search one based upon splitting that into first and
                     // last names.
                     //
-                    collection = new PersonCollection();
-                    collection.LoadByName(tbFindName.Text, "");
+                    if (tbFindName.Text.Contains(" ") == false)
+                    {
+                        int i;
 
-                    collection2 = new PersonCollection();
-                    collection2.LoadByName("", tbFindName.Text);
+                        collection = new PersonCollection();
+                        collection.LoadByName(tbFindName.Text, "");
 
-                    people = new Person[collection.Count + collection2.Count];
-                    collection.ToArray().CopyTo(people, 0);
-                    collection2.ToArray().CopyTo(people, 0);
+                        collection2 = new PersonCollection();
+                        collection2.LoadByName("", tbFindName.Text);
+
+                        for (i = 0; i < collection2.Count; i++)
+                        {
+                            if (collection.FindByID(collection2[i].PersonID) == null)
+                                collection.Add(collection2[i]);
+                        }
+
+                        people = collection.ToArray();
+                    }
+                    else
+                    {
+                        string[] names = tbFindName.Text.Split(new char[1] { ' ' }, 2);
+
+                        collection = new PersonCollection();
+                        collection.LoadByName(names[0], names[1]);
+
+                        people = collection.ToArray();
+                    }
                 }
                 else if (tbFindPhone.Text != "")
                 {
+                    System.Data.SqlClient.SqlDataReader reader;
+                    string queryString;
+                    ArrayList list = new ArrayList();
+
                     //
-                    // Search by phone number instead.
+                    // Query the database for all person_id's who have a stripped
+                    // phone number containing the given phone number.
                     //
-                    collection = new PersonCollection();
-                    collection.LoadByPhone(tbFindPhone.Text);
-                    people = collection.ToArray();
+                    queryString = "SELECT DISTINCT person_id FROM core_person_phone WHERE phone_number_stripped LIKE '%" + tbFindPhone.Text + "%';";
+                    reader = new Arena.DataLayer.Organization.OrganizationData().ExecuteReader(queryString);
+
+                    //
+                    // Walk the reader and add all the results.
+                    //
+                    while (reader.Read())
+                    {
+                        list.Add(new Person(Convert.ToInt32(reader[0])));
+                    }
+
+                    reader.Close();
+
+                    people = (Person[])list.ToArray(typeof(Person));
                 }
                 else
                 {
@@ -274,6 +317,11 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     //
                     people = new Person[0];
                 }
+
+                //
+                // Sort the people.
+                //
+                Array.Sort(people, new PersonComparer());
 
                 //
                 // Clear the search results and add each person found.
@@ -285,7 +333,12 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     HtmlTableCell cell;
                     LinkButton link;
                     PersonPhone phone;
+                    string grade;
 
+                    //
+                    // Alternate row background colors.
+                    //
+                    row.Attributes.Add("class", ((phSearchResults.Controls.Count % 2) != 0 ? "listItem" : "listAltItem"));
 
                     //
                     // Add in the link button to select this person.
@@ -293,9 +346,8 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     cell = new HtmlTableCell();
                     link = new LinkButton();
                     link.ID = "btnPerson" + p.PersonID;
-                    link.Text = p.FullName;
+                    link.Text = p.LastName + ", " + p.FirstName;
                     link.Click += new EventHandler(btnSelectPerson_Click);
-                    link.CssClass = "smallText";
                     cell.Controls.Add(link);
                     row.Cells.Add(cell);
 
@@ -310,13 +362,19 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     row.Cells.Add(TableCellString(null, (p.Age != -1 ? p.Age.ToString() : "")));
 
                     //
+                    // Add in the grade.
+                    //
+                    grade = Person.GetGradeName(Person.CalculateGradeLevel(p.GraduationDate, CurrentOrganization.GradePromotionDate));
+                    row.Cells.Add(TableCellString(null, grade));
+
+                    //
                     // Add in the Main/Home phone number.
                     //
                     phone = p.Phones.FindByType(new Guid("F2A0FBA2-D5AB-421F-A5AB-0C67DB6FD72E"));
                     if (phone != null && phone.Number != "")
                     {
                         if (phone.Unlisted)
-                            row.Cells.Add(TableCellString(null, "(unlisted)"));
+                            row.Cells.Add(TableCellString(null, phone.Number + " (unlisted)"));
                         else
                             row.Cells.Add(TableCellString(null, phone.Number));
                     }
@@ -342,7 +400,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 HtmlTableRow row;
                 HtmlTableCell cell;
                 DropDownList list;
-                string email, grade;
+                string grade;
                 int i;
 
                 //
@@ -358,71 +416,69 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     phFamilyMembers.Controls.Add(row);
 
                     row.Cells.Add(TableCellLookupDropDownList("ddlMemberTitle_" + i.ToString(), new Guid("3394ca53-5791-42c8-b996-1d77c740cf03"), (SetValues ? fm.Title.LookupID.ToString() : null), false));
-                    row.Cells.Add(TableCellTextBox("tbMemberFirstName_" + i.ToString(), (SetValues ? fm.FirstName : null), 75));
-                    row.Cells.Add(TableCellTextBox("tbMemberLastName_" + i.ToString(), (SetValues ? fm.LastName : null), 110));
+                    row.Cells.Add(TableCellTextBox("tbMemberFirstName_" + i.ToString(), (SetValues ? fm.FirstName : null), 65));
+                    row.Cells.Add(TableCellTextBox("tbMemberLastName_" + i.ToString(), (SetValues ? fm.LastName : null), 90));
                     row.Cells.Add(TableCellLookupDropDownList("ddlMemberFamilyRole_" + i.ToString(), new Guid("d3ce5e62-4ef2-4ff8-a80d-5492bf995459"), (SetValues ? fm.FamilyRole.LookupID.ToString() : null), true));
                     list = (DropDownList)row.Cells[row.Cells.Count - 1].Controls[0];
                     list.Attributes["onchange"] = "hdc_toggleFamilyAttributes();";
-                    row.Cells.Add(TableCellDateTextBox("dtbMemberBirthDate_" + i.ToString(), (SetValues ? fm.BirthDate.ToString("MM/dd/yyyy") : null)));
                     row.Cells.Add(TableCellEnumDropDownList("ddlMemberGender_" + i.ToString(), typeof(Arena.Enums.Gender), (SetValues ? fm.Gender.ToString() : null)));
-                    row.Cells.Add(TableCellLookupDropDownList("ddlMemberStatus_" + i.ToString(), new Guid("0b4532db-3188-40f5-b188-e7e6e4448c85"), (SetValues ? fm.MemberStatus.LookupID.ToString() : null), true));
-                    row.Cells.Add(TableCellLookupDropDownList("ddlMemberMaritalStatus_" + i.ToString(), new Guid("0aad26c7-ad9d-4fe8-96b1-c9bcd033bb5b"), (SetValues ? fm.MaritalStatus.LookupID.ToString() : null), true));
-                    row.Cells.Add(TableCellDateTextBox("dtbMemberAnniversaryDate_" + i.ToString(), (SetValues ? fm.AnniversaryDate.ToString("MM/dd/yyyy") : null)));
-
-                    //
-                    // Add another row for the extra information that will appear
-                    // and disappear depending on first-row selections.
-                    //
-                    row = new HtmlTableRow();
-                    row.Height = "40";
-                    row.VAlign = "top";
-                    phFamilyMembers.Controls.Add(row);
-
-                    //
-                    // Email Address.
-                    //
-                    email = (fm.Emails.FirstActive != null ? fm.Emails.FirstActive : "");
-                    row.Cells.Add(new HtmlTableCell());
-                    cell = TableCellString("textMemberEmail_" + i.ToString(), "Email&nbsp;&nbsp;");
-                    cell.Align = "right";
-                    cell.Style.Add("font-weight", "bold");
-                    row.Cells.Add(cell);
-                    row.Cells.Add(TableCellTextBox("tbMemberEmail_" + i.ToString(), (SetValues ? email : null), 110));
+                    row.Cells.Add(TableCellDateTextBox("dtbMemberBirthDate_" + i.ToString(), (SetValues ? fm.BirthDate.ToString("MM/dd/yyyy") : null)));
 
                     //
                     // Grade
                     //
                     grade = Person.CalculateGradeLevel(fm.GraduationDate, CurrentOrganization.GradePromotionDate).ToString();
-                    cell = TableCellString("textMemberGrade_" + i.ToString(), "Grade&nbsp;&nbsp;");
-                    cell.Align = "right";
-                    cell.Style.Add("font-weight", "bold");
-                    row.Cells.Add(cell);
                     cell = new HtmlTableCell();
                     list = new DropDownList();
                     cell.Controls.Add(list);
-                    list.Items.Add(new ListItem("", "-1"));
-                    list.Items.Add(new ListItem("Kindergarten", "0"));
-                    list.Items.Add(new ListItem("1st", "1"));
-                    list.Items.Add(new ListItem("2nd", "2"));
-                    list.Items.Add(new ListItem("3rd", "3"));
-                    list.Items.Add(new ListItem("4th", "4"));
-                    list.Items.Add(new ListItem("5th", "5"));
-                    list.Items.Add(new ListItem("6th", "6"));
-                    list.Items.Add(new ListItem("7th", "7"));
-                    list.Items.Add(new ListItem("8th", "8"));
-                    list.Items.Add(new ListItem("9th", "9"));
-                    list.Items.Add(new ListItem("10th", "10"));
-                    list.Items.Add(new ListItem("11th", "11"));
-                    list.Items.Add(new ListItem("12th", "12"));
+                    PopulateGrades(list);
                     list.CssClass = "smallText";
                     list.ID = "ddlMemberGrade_" + i.ToString();
-                    list.SelectedValue = grade;
+                    if (SetValues)
+                        list.SelectedValue = grade;
                     row.Cells.Add(cell);
+
+                    row.Cells.Add(TableCellLookupDropDownList("ddlMemberMaritalStatus_" + i.ToString(), new Guid("0aad26c7-ad9d-4fe8-96b1-c9bcd033bb5b"), (SetValues ? fm.MaritalStatus.LookupID.ToString() : null), true));
+                    row.Cells.Add(TableCellDateTextBox("dtbMemberAnniversaryDate_" + i.ToString(), (SetValues ? fm.AnniversaryDate.ToString("MM/dd/yyyy") : null)));
+                    row.Cells.Add(TableCellTextBox("tbMemberEmail_" + i.ToString(), (SetValues ? (fm.Emails.FirstActive != null ? fm.Emails.FirstActive : "") : null), 150));
+
+                    //
+                    // Add in an image with a javascript click handler that will toggle
+                    // the visibility of the extra fields. If you change the image file
+                    // here you must also update the javascript code.
+                    //
+                    Image img = new Image();
+                    img.ImageUrl = BaseUrl() + "Images/information2.gif";
+                    img.ID = "imgMemberShowExtra_" + i.ToString();
+                    img.Attributes.Add("onclick", "hdc_toggleExtraFields(this);");
+                    cell = new HtmlTableCell();
+                    cell.Controls.Add(img);
+                    row.Cells.Add(cell);
+
+                    //
+                    // Add another row for the extra information that will appear
+                    // and disappear depending on first-row selections.
+                    //
+                    cell = TableCellString(null, "extra");
+                    cell.ColSpan = row.Cells.Count;
+                    row = new HtmlTableRow();
+                    row.ID = "trMemberExtraFields_" + i.ToString();
+                    row.Cells.Add(cell);
+                    row.Style.Add("display", "none");
+                    phFamilyMembers.Controls.Add(row);
                 }
             }
 
             BuildExtraRows(SetValues);
             Page.ClientScript.RegisterStartupScript(typeof(Page), "hdc_toggleFamilyAttributes", "<script>hdc_toggleFamilyAttributes();</script>");
+
+            //
+            // Make sure all the panels are in the correct state.
+            //
+            pnlFindResults.Visible = (((tbFindName.Text != "" || tbFindPhone.Text != "") && hfFamily.Value == "") ? true : false);
+            pnlFamily.Visible = (hfFamily.Value == "" ? false : true);
+            if (hfFamily.Value != "")
+                Page.ClientScript.RegisterStartupScript(typeof(Page), "hdc_hideSearch", "<script>hideFindFamilyContent();</script>");
         }
 
         /// <summary>
@@ -476,65 +532,55 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 row.Height = "25";
                 row.VAlign = "top";
                 row.Cells.Add(TableCellLookupDropDownList("ddlMemberTitle_" + i.ToString(), new Guid("3394ca53-5791-42c8-b996-1d77c740cf03"), (SetValues ? "" : null), false));
-                row.Cells.Add(TableCellTextBox("tbMemberFirstName_" + i.ToString(), (SetValues ? "" : null), 75));
-                row.Cells.Add(TableCellTextBox("tbMemberLastName_" + i.ToString(), (SetValues ? tbFamilyName.Text : null), 110));
+                row.Cells.Add(TableCellTextBox("tbMemberFirstName_" + i.ToString(), (SetValues ? "" : null), 65));
+                row.Cells.Add(TableCellTextBox("tbMemberLastName_" + i.ToString(), (SetValues ? tbFamilyName.Text : null), 90));
                 row.Cells.Add(TableCellLookupDropDownList("ddlMemberFamilyRole_" + i.ToString(), new Guid("d3ce5e62-4ef2-4ff8-a80d-5492bf995459"), (SetValues ? lu.LookupID.ToString() : null), true));
                 list = (DropDownList)row.Cells[row.Cells.Count - 1].Controls[0];
                 list.Attributes["onchange"] = "hdc_toggleFamilyAttributes();";
-                row.Cells.Add(TableCellDateTextBox("dtbMemberBirthDate_" + i.ToString(), (SetValues ? "" : null)));
                 row.Cells.Add(TableCellEnumDropDownList("ddlMemberGender_" + i.ToString(), typeof(Arena.Enums.Gender), (SetValues ? "" : null)));
-                row.Cells.Add(TableCellLookupDropDownList("ddlMemberStatus_" + i.ToString(), new Guid("0b4532db-3188-40f5-b188-e7e6e4448c85"), (SetValues ? "" : null), true));
+                row.Cells.Add(TableCellDateTextBox("dtbMemberBirthDate_" + i.ToString(), (SetValues ? "" : null)));
+
+                //
+                // Grade
+                //
+                cell = new HtmlTableCell();
+                list = new DropDownList();
+                cell.Controls.Add(list);
+                PopulateGrades(list);
+                list.CssClass = "smallText";
+                list.ID = "ddlMemberGrade_" + i.ToString();
+                row.Cells.Add(cell);
+
                 row.Cells.Add(TableCellLookupDropDownList("ddlMemberMaritalStatus_" + i.ToString(), new Guid("0aad26c7-ad9d-4fe8-96b1-c9bcd033bb5b"), (SetValues ? "" : null), true));
                 row.Cells.Add(TableCellDateTextBox("dtbMemberAnniversaryDate_" + i.ToString(), (SetValues ? "" : null)));
+                row.Cells.Add(TableCellTextBox("tbMemberEmail_" + i.ToString(), (SetValues ? "" : null), 150));
 
                 phFamilyMembers.Controls.Add(row);
+
+                //
+                // Add in an image with a javascript click handler that will toggle
+                // the visibility of the extra fields. If you change the image file
+                // here you must also update the javascript code.
+                //
+                Image img = new Image();
+                img.ImageUrl = BaseUrl() + "Images/information2.gif";
+                img.ID = "imgMemberShowExtra_" + i.ToString();
+                img.Attributes.Add("onclick", "hdc_toggleExtraFields(this);");
+                cell = new HtmlTableCell();
+                cell.Controls.Add(img);
+                row.Cells.Add(cell);
 
                 //
                 // Add another row for the extra information that will appear
                 // and disappear depending on first-row selections.
                 //
+                cell = TableCellString(null, "extra");
+                cell.ColSpan = row.Cells.Count;
                 row = new HtmlTableRow();
-                row.Height = "40";
-                row.VAlign = "top";
+                row.ID = "trMemberExtraFields_" + i.ToString();
+                row.Cells.Add(cell);
+                row.Style.Add("display", "none");
                 phFamilyMembers.Controls.Add(row);
-
-                //
-                // Email Address.
-                //
-                row.Cells.Add(new HtmlTableCell());
-                cell = TableCellString("textMemberEmail_" + i.ToString(), "Email&nbsp;&nbsp;");
-                cell.Align = "right";
-                cell.Style.Add("font-weight", "bold");
-                row.Cells.Add(cell);
-                row.Cells.Add(TableCellTextBox("tbMemberEmail_" + i.ToString(), null, 110));
-
-                //
-                // Grade
-                //
-                cell = TableCellString("textMemberGrade_" + i.ToString(), "Grade&nbsp;&nbsp;");
-                cell.Align = "right";
-                cell.Style.Add("font-weight", "bold");
-                row.Cells.Add(cell);
-                cell = new HtmlTableCell();
-                list = new DropDownList();
-                cell.Controls.Add(list);
-                list.Items.Add(new ListItem("", "-1"));
-                list.Items.Add(new ListItem("Kindergarten", "0"));
-                list.Items.Add(new ListItem("1st", "1"));
-                list.Items.Add(new ListItem("2nd", "2"));
-                list.Items.Add(new ListItem("3rd", "3"));
-                list.Items.Add(new ListItem("4th", "4"));
-                list.Items.Add(new ListItem("5th", "5"));
-                list.Items.Add(new ListItem("6th", "6"));
-                list.Items.Add(new ListItem("7th", "7"));
-                list.Items.Add(new ListItem("8th", "8"));
-                list.Items.Add(new ListItem("9th", "9"));
-                list.Items.Add(new ListItem("10th", "10"));
-                list.Items.Add(new ListItem("11th", "11"));
-                list.Items.Add(new ListItem("12th", "12"));
-                list.CssClass = "smallText";
-                list.ID = "ddlMemberGrade_" + i.ToString();
-                row.Cells.Add(cell);
             }
         }
 
@@ -643,6 +689,48 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             return cell;
         }
 
+        private void PopulateGrades(DropDownList list)
+        {
+            list.Items.Add(new ListItem("", "-1"));
+            list.Items.Add(new ListItem("Kinder", "0"));
+            list.Items.Add(new ListItem("1st", "1"));
+            list.Items.Add(new ListItem("2nd", "2"));
+            list.Items.Add(new ListItem("3rd", "3"));
+            list.Items.Add(new ListItem("4th", "4"));
+            list.Items.Add(new ListItem("5th", "5"));
+            list.Items.Add(new ListItem("6th", "6"));
+            list.Items.Add(new ListItem("7th", "7"));
+            list.Items.Add(new ListItem("8th", "8"));
+            list.Items.Add(new ListItem("9th", "9"));
+            list.Items.Add(new ListItem("10th", "10"));
+            list.Items.Add(new ListItem("11th", "11"));
+            list.Items.Add(new ListItem("12th", "12"));
+        }
+
+        /// <summary>
+        /// Retrieve the base url (the portion of the URL without the last path
+        /// component, that is the filename and query string) of the current
+        /// web request.
+        /// </summary>
+        /// <returns>Base url as a string.</returns>
+        private string BaseUrl()
+        {
+            StringBuilder url = new StringBuilder();
+            string[] segments;
+            int i;
+
+
+            url.Append(HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority));
+            segments = HttpContext.Current.Request.Url.Segments;
+            for (i = 0; i < segments.Length - 1; i++)
+            {
+                url.Append(segments[i]);
+            }
+
+            return url.ToString();
+        }
+
+
         #endregion
 
         #region Web Form Code
@@ -656,5 +744,21 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         }
 
         #endregion
+    }
+
+    public class PersonComparer : IComparer
+    {
+        int IComparer.Compare(Object x, Object y)
+        {
+            CaseInsensitiveComparer comparer = new CaseInsensitiveComparer();
+            int result;
+
+
+            result = comparer.Compare(((Person)x).LastName, ((Person)y).LastName);
+            if (result == 0)
+                result = comparer.Compare(((Person)x).FirstName, ((Person)y).FirstName);
+
+            return result;
+        }
     }
 }

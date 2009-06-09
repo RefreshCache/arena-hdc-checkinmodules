@@ -36,10 +36,16 @@ function hdc_getElementById(elementID)
     for (i = 0; i < form.length; i++)
     {
         obj = form.elements[i];
-        if (obj == null)
-            break;
-        
-        if (obj.id.indexOf(elementID) != -1)
+
+        if (obj.id.indexOf(elementID) != -1 && obj.id.substring(obj.id.indexOf(elementID)) == elementID)
+            return obj;
+    }
+
+    for (i = 0; i < document.links.length; i++)
+    {
+        obj = document.links[i];
+
+        if (obj.id.indexOf(elementID) != -1 && obj.id.substring(obj.id.indexOf(elementID)) == elementID)
             return obj;
     }
 
@@ -62,7 +68,7 @@ function hdc_inarray(arrayObj, value)
 function hdc_toggleFamilyAttributes()
 {
     var i, role, x, value, lead;
-    var grade, gradeHeader, email, emailHeader, anniversary, anniversaryCal;
+    var grade, email, maritalStatus, anniversary, anniversaryCal;
     var gradeRoles, emailRoles;
 
     emailRoles = hdc_getElementById('hfEmailRoleIDs').value.split(',');
@@ -81,53 +87,95 @@ function hdc_toggleFamilyAttributes()
             x = role.id.split('Role_')[1];
 
             //
-            // Handle anniversary date.
+            // Always hide the calendar date pickers.
             //
+            document.getElementById(lead + 'dtbMemberBirthDate_' + x + '_calImage').style.display = 'none';
+            document.getElementById(lead + 'dtbMemberAnniversaryDate_' + x + '_calImage').style.display = 'none';
+
+            //
+            // Handle marital status and anniversary date.
+            //
+            maritalStatus = document.getElementById(lead + 'ddlMemberMaritalStatus_' + x);
             anniversary = document.getElementById(lead + 'dtbMemberAnniversaryDate_' + x);
-            anniversaryCal = document.getElementById(lead + 'dtbMemberAnniversaryDate_' + x + '_calImage');
             if (role.options[role.selectedIndex].text.toLowerCase() == 'adult')
             {
+                maritalStatus.style.display = 'inline';
                 anniversary.style.display = 'inline';
-                anniversaryCal.style.display = 'inline';
             }
             else
             {
+                maritalStatus.style.display = 'none';
                 anniversary.style.display = 'none';
-                anniversaryCal.style.display = 'none';
             }
 
             //
             // Handle grades.
             //
             grade = document.getElementById(lead + 'ddlMemberGrade_' + x);
-            gradeHeader = document.getElementById(lead + 'textMemberGrade_' + x);
             if (hdc_inarray(gradeRoles, value))
-            {
                 grade.style.display = 'inline';
-                gradeHeader.style.display = 'inline';
-            }
             else
-            {
                 grade.style.display = 'none';
-                gradeHeader.style.display = 'none';
-            }
 
             //
             // Handle e-mail addresses.
             //
             email = document.getElementById(lead + 'tbMemberEmail_' + x);
-            emailHeader = document.getElementById(lead + 'textMemberEmail_' + x);
             if (hdc_inarray(emailRoles, value))
-            {
                 email.style.display = 'inline';
-                emailHeader.style.display = 'inline';
-            }
             else
-            {
                 email.style.display = 'none';
-                emailHeader.style.display = 'none';
-            }
         }
+    }
+}
+
+//
+// Expand or collapse the extra fields information of a member.
+//
+function hdc_toggleExtraFields(ctl)
+{
+    var elements, memberIdx, lead, obj;
+
+    //
+    // Find the member number we are concerned with.
+    //
+    lead = ctl.id.split('imgMember')[0];
+    elements = ctl.id.split('_');
+    memberIdx = elements[elements.length - 1];
+
+    //
+    // Find the extra fields object we are concerned with and toggle them.
+    //
+    obj = document.getElementById(lead + 'trMemberExtraFields_' + memberIdx);
+    if (obj.style.display == 'none')
+    {
+        obj.style.display = 'table';
+        ctl.src = ctl.src.substring(0, ctl.src.indexOf('information2.gif')) + 'cancel.gif';
+    }
+    else
+    {
+        obj.style.display = 'none';
+        ctl.src = ctl.src.substring(0, ctl.src.indexOf('cancel.gif')) + 'information2.gif';
+    }
+}
+
+//
+// Detect if the user pressed enter and if so initiate the search.
+//
+function hdc_checkSearchSubmit(e)
+{
+    var keyCode;
+
+    keyCode = (e && e.which ? e.which : event.keyCode);
+
+    if (keyCode == 13)
+    {
+        var search = hdc_getElementById('btnSearch');
+        
+        if (search)
+            __doPostBack(search.id.replace(/_/g, '$'), '');
+
+        return false;
     }
 }
 </script>
@@ -145,7 +193,7 @@ function hdc_toggleFamilyAttributes()
                 <tr>
                     <td width="158" style="background-color: #f0f0ff; border-left: solid 2px gray;"></td>
                     <td style="border-bottom: solid 2px gray; border-left: solid 2px gray;"></td>
-                    <td width="10%"></td>
+                    <td width="5%"></td>
                 </tr>
                 <tr>
                     <td colspan="2" style="background-color: #f0f0ff; padding: 4px; border-left: solid 2px gray; border-right: solid 2px gray; border-bottom: solid 2px gray;">
@@ -155,11 +203,11 @@ function hdc_toggleFamilyAttributes()
                             </tr>
                             <tr>
                                 <td align="right" class="smallText" style="width: 150px;">Name:<br />(Partial searches allowed)</td>
-                                <td align="left"><asp:TextBox ID="tbFindName" runat="server" Width="200px" MaxLength="100"></asp:TextBox></td>
+                                <td align="left"><asp:TextBox ID="tbFindName" onkeydown="return hdc_checkSearchSubmit(event);" runat="server" Width="200px" MaxLength="100"></asp:TextBox></td>
                             </tr>
                             <tr>
                                 <td align="right" class="smallText" style="width: 150px;">Phone:<br />(Partial searches allowed)</td>
-                                <td align="left"><asp:TextBox ID="tbFindPhone" runat="server" Width="130px" MaxLength="14"></asp:TextBox></td>
+                                <td align="left"><asp:TextBox ID="tbFindPhone" onkeydown="return hdc_checkSearchSubmit(event);" runat="server" Width="130px" MaxLength="14"></asp:TextBox></td>
                             </tr>
                             <tr><td class="smallText">&nbsp;</td><td class="smallText">&nbsp;</td></tr>
                             <tr>
@@ -187,7 +235,7 @@ function hdc_toggleFamilyAttributes()
         <tr>
             <td align="center" style="width: 150px; font-size: 12px; font-weight: bold; background-color: #f0f0ff; padding: 4px; border-top: solid 2px gray; border-left: solid 2px gray; border-right: solid 2px gray;">Search Results</td>
             <td style="border-bottom: solid 2px gray;">&nbsp;</td>
-            <td style="width: 10%">&nbsp;</td>
+            <td style="width: 5%">&nbsp;</td>
         </tr>
         <tr>
             <td colspan="2" style="background-color: #f0f0ff; padding: 4px; border-left: solid 2px gray; border-right: solid 2px gray; border-bottom: solid 2px gray;">
@@ -196,6 +244,7 @@ function hdc_toggleFamilyAttributes()
                         <td align="left" class="smallText" style="font-weight: bold;">Name</td>
                         <td align="left" class="smallText" style="font-weight: bold;">Gender</td>
                         <td align="left" class="smallText" style="font-weight: bold;">Age</td>
+                        <td align="left" class="smallText" style="font-weight: bold;">Grade</td>
                         <td align="left" class="smallText" style="font-weight: bold;">Home Phone</td>
                         <td align="left" class="smallText" style="font-weight: bold;">E-Mail</td>
                     </tr>
@@ -212,14 +261,14 @@ function hdc_toggleFamilyAttributes()
         <tr>
             <td align="center" style="width: 150px; font-size: 12px; font-weight: bold; background-color: #f0f0ff; padding: 4px; border-top: solid 2px gray; border-left: solid 2px gray; border-right: solid 2px gray;">Family Information</td>
             <td style="border-bottom: solid 2px gray;">&nbsp;</td>
-            <td style="width: 10%">&nbsp;</td>
+            <td style="width: 5%">&nbsp;</td>
         </tr>
         <tr>
             <td colspan="2" style="background-color: #f0f0ff; padding: 4px; border-left: solid 2px gray; border-right: solid 2px gray; border-bottom: solid 2px gray;">
                 <table cellpadding="0" cellspacing="2" align="center" border="0" width="100%" style="padding-top: 10px;">
                     <tr>
                         <td align="left" class="smallText" style="font-weight: bold; width: 50%;">Family Name:&nbsp;<asp:TextBox ID="tbFamilyName" runat="server" CssClass="smallText" MaxLength="100" Width="150px" TabIndex="0"></asp:TextBox></td>
-                        <td align="left" class="smallText" style="font-weight: bold; width: 50%;">Main/Home Phone:&nbsp;<Arena:PhoneTextBox ID="tbMainPhone" runat="server" CssClass="smallText" ShowExtension="false" Width="100px" Required="false" /></td>
+                        <td align="left" class="smallText" width: 50%;"><table border="0" cellpadding="0" cellspacing="0"><tr><td align="center"><span style="font-weight: bold;">Main/Home Phone:&nbsp;<br /></span>(Applies to all)</td><td><Arena:PhoneTextBox ID="tbMainPhone" runat="server" CssClass="smallText" ShowExtension="false" Width="100px" Required="false" /><asp:CheckBox ID="cbMainPhoneUnlisted" runat="server" CssClass="smallText" Text="(unlisted)" Checked="false" /></td></tr></table></td>
                     </tr>
                 </table>
                 <br />
@@ -250,7 +299,7 @@ function hdc_toggleFamilyAttributes()
         <tr>
             <td align="center" style="width: 150px; font-size: 12px; font-weight: bold; background-color: #f0f0ff; padding: 4px; border-top: solid 2px gray; border-left: solid 2px gray; border-right: solid 2px gray;">Family Members</td>
             <td style="border-bottom: solid 2px gray;">&nbsp;</td>
-            <td style="width: 10%">&nbsp;</td>
+            <td style="width: 5%">&nbsp;</td>
         </tr>
         <tr>
             <td colspan="2" style="background-color: #f0f0ff; padding: 4px; border-left: solid 2px gray; border-right: solid 2px gray; border-bottom: solid 2px gray;">
@@ -260,11 +309,13 @@ function hdc_toggleFamilyAttributes()
                         <td align="left" valign="bottom" class="smallText" style="font-weight: bold">First Name</td>
                         <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Last Name</td>
                         <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Family<br />Role</td>
-                        <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Birth Date</td>
                         <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Gender</td>
-                        <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Member<br />Status</td>
+                        <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Birth Date</td>
+                        <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Grade</td>
                         <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Marital<br />Status</td>
                         <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Anniversary<br />Date</td>
+                        <td align="left" valign="bottom" class="smallText" style="font-weight: bold">E-mail</td>
+                        <td align="left" valign="bottom" class="smallText" style="font-weight: bold"></td>
                     </tr>
                     <asp:PlaceHolder id="phFamilyMembers" runat="server"></asp:PlaceHolder>
                 </table>

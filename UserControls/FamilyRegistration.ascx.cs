@@ -59,13 +59,27 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             ListSelectionMode.Multiple)]
         public string EmailFamilyRoleIDsSetting { get { return Setting("EmailFamilyRoleIDs", "", false); } }
 
+        [ListFromSqlSetting("Person Attributes", "The person attributes to provide access to in the extra information space of a member.", false, "",
+            "SELECT [ca].[attribute_id],[cag].[group_name]+' - '+[ca].[attribute_name] FROM [core_attribute] AS [ca] JOIN [core_attribute_group] AS [cag] ON [ca].[attribute_group_id] = [cag].[attribute_group_id] ORDER BY [cag].[group_name],[ca].[attribute_order]",
+            ListSelectionMode.Multiple)]
+        public string PersonAttributeIDsSetting { get { return Setting("PersonAttributeIDs", "", false); } }
+
         [LookupSetting("New Member Status", "The member status given to new members added through this module.", true, "0b4532db-3188-40f5-b188-e7e6e4448c85")]
         public Lookup NewMemberStatusSetting { get { return new Lookup(Convert.ToInt32(Setting("NewMemberStatus", "", true))); } }
+
+        [CampusSetting("New Member Campus", "The campus a new member is assigned to when added through this module.", true)]
+        public int NewMemberCampusSetting { get { return Convert.ToInt32(Setting("NewMemberCampus", "", true)); } }
 
         #endregion
 
         #region Event Handlers
 
+        /// <summary>
+        /// Whenever a page is loaded make sure it is in a sane state. Also rebuild
+        /// the page and on initial load populate a few lists.
+        /// </summary>
+        /// <param name="sender">unused</param>
+        /// <param name="e">unused</param>
         private void Page_Load(object sender, System.EventArgs e)
         {
             //
@@ -104,6 +118,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         {
             pnlFindResults.Visible = true;
             pnlFamily.Visible = false;
+            hfFamily.Value = "";
         }
 
         /// <summary>
@@ -120,6 +135,10 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             LinkButton button = (LinkButton)sender;
             Person p;
 
+            //
+            // Find the person they clicked on and load up the family
+            // information based upon that person.
+            //
             p = new Person(Convert.ToInt32(button.ID.Substring(9)));
             hfFamily.Value = p.FamilyId.ToString();
             hfExtraCount.Value = "0";
@@ -186,15 +205,9 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         {
             pnlFindResults.Visible = false;
             pnlFamily.Visible = true;
-            hfFamily.Value = "";
+            hfFamily.Value = "-1";
             hfExtraCount.Value = NewFamilySizeSetting.ToString();
             Page.ClientScript.RegisterStartupScript(typeof(Page), "hdc_hideSearch", "<script>hideFindFamilyContent();</script>");
-
-            //
-            // It is safe to set values here since we are starting over.
-            //
-            phFamilyMembers.Controls.Clear();
-            Build_Page(true);
 
             //
             // Clear out the family information boxes.
@@ -210,6 +223,12 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             else
                 ddlAddressCountry.SelectedValue = "";
             tbMainPhone.PhoneNumber = "";
+
+            //
+            // It is safe to set values here since we are starting over.
+            //
+            phFamilyMembers.Controls.Clear();
+            Build_Page(true);
         }
 
         /// <summary>
@@ -253,20 +272,26 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     //
                     // Perform a search by name. Search for any match in the
                     // first name and last name fields.
-                    // TODO: If there is a space in the name, make the primary
-                    // search one based upon splitting that into first and
-                    // last names.
                     //
                     if (tbFindName.Text.Contains(" ") == false)
                     {
                         int i;
 
+                        //
+                        // Search for first name.
+                        //
                         collection = new PersonCollection();
                         collection.LoadByName(tbFindName.Text, "");
 
+                        //
+                        // Search for last name.
+                        //
                         collection2 = new PersonCollection();
                         collection2.LoadByName("", tbFindName.Text);
 
+                        //
+                        // Merge the two searches.
+                        //
                         for (i = 0; i < collection2.Count; i++)
                         {
                             if (collection.FindByID(collection2[i].PersonID) == null)
@@ -279,6 +304,9 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     {
                         string[] names = tbFindName.Text.Split(new char[1] { ' ' }, 2);
 
+                        //
+                        // Search for a specific first and last name.
+                        //
                         collection = new PersonCollection();
                         collection.LoadByName(names[0], names[1]);
 
@@ -393,7 +421,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             // If they have selected a family then build up the members.
             //
-            if (hfFamily.Value != "")
+            if (hfFamily.Value != "" && hfFamily.Value != "-1")
             {
                 Family f = new Family(Convert.ToInt32(hfFamily.Value));
                 FamilyMember fm;
@@ -415,6 +443,15 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     row.VAlign = "top";
                     phFamilyMembers.Controls.Add(row);
 
+                    //
+                    // Add in a hidden cell for the person ID.
+                    //
+                    row.Cells.Add(TableCellString("textMemberID_" + i.ToString(), fm.PersonID.ToString()));
+                    ((Label)row.Cells[row.Cells.Count - 1].Controls[0]).Style.Add("display", "none");
+
+                    //
+                    // Build some basics about the person.
+                    //
                     row.Cells.Add(TableCellLookupDropDownList("ddlMemberTitle_" + i.ToString(), new Guid("3394ca53-5791-42c8-b996-1d77c740cf03"), (SetValues ? fm.Title.LookupID.ToString() : null), false));
                     row.Cells.Add(TableCellTextBox("tbMemberFirstName_" + i.ToString(), (SetValues ? fm.FirstName : null), 65));
                     row.Cells.Add(TableCellTextBox("tbMemberLastName_" + i.ToString(), (SetValues ? fm.LastName : null), 90));
@@ -439,7 +476,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     row.Cells.Add(cell);
 
                     row.Cells.Add(TableCellLookupDropDownList("ddlMemberMaritalStatus_" + i.ToString(), new Guid("0aad26c7-ad9d-4fe8-96b1-c9bcd033bb5b"), (SetValues ? fm.MaritalStatus.LookupID.ToString() : null), true));
-                    row.Cells.Add(TableCellDateTextBox("dtbMemberAnniversaryDate_" + i.ToString(), (SetValues ? fm.AnniversaryDate.ToString("MM/dd/yyyy") : null)));
+                    row.Cells.Add(TableCellDateTextBox("dtbMemberAnniversaryDate_" + i.ToString(), (SetValues ? (fm.AnniversaryDate.Year != 1900 ? fm.AnniversaryDate.ToString("MM/dd/yyyy") : "") : null)));
                     row.Cells.Add(TableCellTextBox("tbMemberEmail_" + i.ToString(), (SetValues ? (fm.Emails.FirstActive != null ? fm.Emails.FirstActive : "") : null), 150));
 
                     //
@@ -460,10 +497,22 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     // and disappear depending on first-row selections.
                     //
                     cell = TableCellString(null, "extra");
-                    cell.ColSpan = row.Cells.Count;
+                    cell.ColSpan = (row.Cells.Count - 2);
                     row = new HtmlTableRow();
+                    row.Cells.Add(TableCellString(null, ""));
+                    row.Cells[row.Cells.Count - 1].ColSpan = 2;
                     row.ID = "trMemberExtraFields_" + i.ToString();
                     row.Cells.Add(cell);
+
+                    //
+                    // Add in all the person attributes.
+                    //
+                    if (PersonAttributeIDsSetting != "")
+                        cell.Controls.Add(AddPersonAttributes(i, fm));
+
+                    //
+                    // Default the row not displayed.
+                    //
                     row.Style.Add("display", "none");
                     phFamilyMembers.Controls.Add(row);
                 }
@@ -531,6 +580,13 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 row = new HtmlTableRow();
                 row.Height = "25";
                 row.VAlign = "top";
+
+                //
+                // Add in a hidden cell for the person ID.
+                //
+                row.Cells.Add(TableCellString("textMemberID_" + i.ToString(), "-1"));
+                ((Label)row.Cells[row.Cells.Count - 1].Controls[0]).Style.Add("display", "none");
+
                 row.Cells.Add(TableCellLookupDropDownList("ddlMemberTitle_" + i.ToString(), new Guid("3394ca53-5791-42c8-b996-1d77c740cf03"), (SetValues ? "" : null), false));
                 row.Cells.Add(TableCellTextBox("tbMemberFirstName_" + i.ToString(), (SetValues ? "" : null), 65));
                 row.Cells.Add(TableCellTextBox("tbMemberLastName_" + i.ToString(), (SetValues ? tbFamilyName.Text : null), 90));
@@ -575,8 +631,10 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 // and disappear depending on first-row selections.
                 //
                 cell = TableCellString(null, "extra");
-                cell.ColSpan = row.Cells.Count;
+                cell.ColSpan = (row.Cells.Count - 2);
                 row = new HtmlTableRow();
+                row.Cells.Add(TableCellString(null, ""));
+                row.Cells[row.Cells.Count - 1].ColSpan = 2;
                 row.ID = "trMemberExtraFields_" + i.ToString();
                 row.Cells.Add(cell);
                 row.Style.Add("display", "none");
@@ -730,6 +788,41 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             return url.ToString();
         }
 
+        private HtmlTable AddPersonAttributes(int index, Person p)
+        {
+            HtmlTable table = new HtmlTable();
+            string[] attributeIDs = PersonAttributeIDsSetting.Split(new char[] { ',' });
+            int i;
+
+            for (i = 0; i < attributeIDs.Length; i++)
+            {
+                table.Rows.Add(AddPersonAttribute(index, p, Convert.ToInt32(attributeIDs[i])));
+            }
+
+            return table;
+        }
+
+        private HtmlTableRow AddPersonAttribute(int index, Person p, int attributeID)
+        {
+            PersonAttribute attribute;
+            HtmlTableRow row = new HtmlTableRow();
+
+
+            //
+            // Create the attribute to work with.
+            //
+            if (p != null)
+                attribute = new PersonAttribute(p.PersonID, attributeID);
+            else
+                attribute = new PersonAttribute(attributeID);
+
+            //
+            // Create the attribute title.
+            //
+            row.Cells.Add(TableCellString(null, attribute.AttributeName));
+
+            return row;
+        }
 
         #endregion
 

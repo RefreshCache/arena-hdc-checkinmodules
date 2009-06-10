@@ -149,7 +149,7 @@ function hdc_toggleExtraFields(ctl)
     obj = document.getElementById(lead + 'trMemberExtraFields_' + memberIdx);
     if (obj.style.display == 'none')
     {
-        obj.style.display = 'table';
+        obj.style.display = 'table-row';
         ctl.src = ctl.src.substring(0, ctl.src.indexOf('information2.gif')) + 'cancel.gif';
     }
     else
@@ -305,6 +305,7 @@ function hdc_checkSearchSubmit(e)
             <td colspan="2" style="background-color: #f0f0ff; padding: 4px; border-left: solid 2px gray; border-right: solid 2px gray; border-bottom: solid 2px gray;">
                 <table id="tblFamily" cellpadding="0" cellspacing="0" align="center" border="0" style="width: 100%; margin-bottom: 15px;">
                     <tr>
+                        <td style="width: 0px"></td>
                         <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Title</td>
                         <td align="left" valign="bottom" class="smallText" style="font-weight: bold">First Name</td>
                         <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Last Name</td>

@@ -274,7 +274,7 @@ function hdc_checkSearchSubmit(e)
                 <br />
                 <table cellpadding="0" cellspacing="4" align="left" border="0">
                     <tr>
-                        <td align="left" class="smallText" style="font-weight: bold; width: 205px;">Address</td>
+                        <td align="left" class="smallText" style="width: 205px;"><span style="font-weight: bold;">Main/Home Address</span><span> (Applies to all)</span></td>
                         <td align="left" class="smallText" style="font-weight: bold; width: 105px;">City</td>
                         <td align="left" class="smallText" style="font-weight: bold; width: 40px">St</td>
                         <td align="left" class="smallText" style="font-weight: bold; width: 95px;">Postal Code</td>
@@ -321,7 +321,12 @@ function hdc_checkSearchSubmit(e)
                     <asp:PlaceHolder id="phFamilyMembers" runat="server"></asp:PlaceHolder>
                 </table>
 
-                <asp:LinkButton ID="btnAddMore" runat="server" CssClass="smallText" Text="Add More"></asp:LinkButton>
+                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                        <td align="left"><asp:LinkButton ID="btnAddMore" runat="server" CssClass="smallText" Text="Add More"></asp:LinkButton></td>
+                        <td align="right"><asp:LinkButton ID="btnSaveFamily" runat="server" CssClass="smallText" Text="Save"></asp:LinkButton></td>
+                    </tr>
+                </table>
             </td>
         </tr>
     </table>

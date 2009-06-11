@@ -1,3 +1,4 @@
+
 /**********************************************************************
 * Description:	This module provides the ability to quickly register a
 *               family at check-in time via a web interface.
@@ -32,6 +33,8 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 	using Arena.Portal;
 	using Arena.Core;
     using Arena.Portal.UI;
+    using Arena.Security;
+    using Arena.Organization;
 
 	public partial class FamilyRegistration : PortalControl
     {
@@ -65,10 +68,13 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         public string PersonAttributeIDsSetting { get { return Setting("PersonAttributeIDs", "", false); } }
 
         [LookupSetting("New Member Status", "The member status given to new members added through this module.", true, "0b4532db-3188-40f5-b188-e7e6e4448c85")]
-        public Lookup NewMemberStatusSetting { get { return new Lookup(Convert.ToInt32(Setting("NewMemberStatus", "", true))); } }
+        public int NewMemberStatusSetting { get { return Convert.ToInt32(Setting("NewMemberStatus", "", true)); } }
 
         [CampusSetting("New Member Campus", "The campus a new member is assigned to when added through this module.", true)]
         public int NewMemberCampusSetting { get { return Convert.ToInt32(Setting("NewMemberCampus", "", true)); } }
+
+        [BooleanSetting("Field Security", "Enable field level security for this module. This setting behaves the same as the PersonDetails module.", true, false)]
+        public bool FieldSecuritySetting { get { return Convert.ToBoolean(Setting("FieldSecurity", "false", true)); } }
 
         #endregion
 
@@ -83,10 +89,9 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         private void Page_Load(object sender, System.EventArgs e)
         {
             //
-            // If searching for families is allowed, then show the search panel.
+            // Enable or disable some basic functionality depending on settings.
             //
-            if (AllowSearchSetting == true)
-                pnlFindFamily.Visible = true;
+            pnlFindFamily.Visible = AllowSearchSetting;
 
             if (!IsPostBack)
             {
@@ -229,6 +234,180 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             phFamilyMembers.Controls.Clear();
             Build_Page(true);
+        }
+
+        void btnSaveFamily_Click(object sender, EventArgs e)
+        {
+            FamilyMember fm;
+            Label lb;
+            int index;
+
+
+            for (index = 0; ; index++)
+            {
+                lb = (Label)phFamilyMembers.FindControl("textMemberID_" + index.ToString());
+                if (lb == null)
+                    break;
+
+                //
+                // Find the person or create a new one.
+                //
+                if (lb.Text != "-1")
+                    fm = new FamilyMember(Convert.ToInt32(hfFamily.Value), Convert.ToInt32(lb.Text));
+                else
+                    break;
+
+                //
+                // Ensure some of the basics are set correctly.
+                //
+                if (fm.Campus == null || fm.Campus.CampusId == -1)
+                    fm.Campus = new Campus(NewMemberCampusSetting);
+                if (fm.MemberStatus == null || fm.MemberStatus.LookupID == -1)
+                    fm.MemberStatus = new Lookup(NewMemberStatusSetting);
+                if (fm.RecordStatus == Arena.Enums.RecordStatus.Undefined)
+                    fm.RecordStatus = Arena.Enums.RecordStatus.Pending;
+
+                //
+                // Save the person's name information.
+                //
+                if (PersonFieldOperationAllowed(PersonFields.Profile_Name, OperationType.Edit))
+                {
+                    fm.FirstName = ((TextBox)phFamilyMembers.FindControl("tbMemberFirstName_" + index.ToString())).Text;
+                    fm.NickName = fm.FirstName;
+                    fm.LastName = ((TextBox)phFamilyMembers.FindControl("tbMemberLastName_" + index.ToString())).Text;
+                }
+
+                //
+                // Save the person's family role.
+                //
+                if (PersonFieldOperationAllowed(PersonFields.Profile_Family_Information, OperationType.Edit))
+                    fm.FamilyRole = new Lookup(Int32.Parse(((DropDownList)phFamilyMembers.FindControl("ddlMemberFamilyRole_" + index.ToString())).SelectedValue));
+                else if (fm.PersonID == -1)
+                    fm.FamilyRole = new Lookup(new Guid("e410e1a6-8715-4bfb-bf03-1cd18051f815"));
+
+                //
+                // Save the person's gender.
+                //
+                if (PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.Edit))
+                    fm.Gender = (Arena.Enums.Gender)Enum.Parse(typeof(Arena.Enums.Gender), ((DropDownList)phFamilyMembers.FindControl("ddlMemberGender_" + index.ToString())).SelectedValue);
+                else if (fm.PersonID == -1)
+                    fm.Gender = Arena.Enums.Gender.Unknown;
+
+                //
+                // Save the person's birth date.
+                //
+                if (PersonFieldOperationAllowed(PersonFields.Profile_BirthDate, OperationType.Edit))
+                {
+                    TextBox tb = (TextBox)phFamilyMembers.FindControl("dtbMemberBirthDate_" + index.ToString());
+
+                    if (string.IsNullOrEmpty(tb.Text) == false)
+                        fm.BirthDate = DateTime.Parse(tb.Text);
+                    else
+                        fm.BirthDate = DateTime.Parse("1/1/1900");
+                }
+
+                //
+                // Save the person's grade.
+                //
+                if (PersonFieldOperationAllowed(PersonFields.Profile_Grade, OperationType.Edit) &&
+                    GradeFamilyRoleIDsSetting.Length > 0 && GradeFamilyRoleIDsSetting.Split(new char[] { ',' }).Contains(fm.FamilyRole.LookupID.ToString()))
+                {
+                    fm.GraduationDate = Person.CalculateGraduationYear(Convert.ToInt32(((DropDownList)phFamilyMembers.FindControl("ddlMemberGrade_" + index.ToString())).SelectedValue), CurrentOrganization.GradePromotionDate);
+                }
+
+                //
+                // Save the person's marital status.
+                //
+                if (PersonFieldOperationAllowed(PersonFields.Profile_Marital_Status, OperationType.Edit) &&
+                    fm.FamilyRole.Value.ToLower() == "adult")
+                {
+                    fm.MaritalStatus = new Lookup(Convert.ToInt32(((DropDownList)phFamilyMembers.FindControl("ddlMemberMaritalStatus_" + index.ToString())).SelectedValue));
+                }
+                else if (fm.PersonID == -1)
+                    fm.MaritalStatus = new Lookup(new Guid("9C000CF2-677B-4725-981E-BD555FDAFB30"));
+
+                //
+                // Save the person's anniversary date.
+                //
+                if (PersonFieldOperationAllowed(PersonFields.Profile_Anniversary_Date, OperationType.Edit) &&
+                    fm.FamilyRole.Value.ToLower() == "adult")
+                {
+                    TextBox tb = (TextBox)phFamilyMembers.FindControl("dtbMemberAnniversaryDate_" + index.ToString());
+
+                    if (string.IsNullOrEmpty(tb.Text) == false)
+                        fm.AnniversaryDate = DateTime.Parse(tb.Text);
+                    else
+                        fm.AnniversaryDate = DateTime.Parse("1/1/1900");
+                }
+
+                //
+                // Save the person's e-mail address.
+                //
+                if (PersonFieldOperationAllowed(PersonFields.Profile_Emails, OperationType.Edit) &&
+                    EmailFamilyRoleIDsSetting.Length > 0 && EmailFamilyRoleIDsSetting.Split(new char[] { ',' }).Contains(fm.FamilyRole.LookupID.ToString()))
+                {
+                    //
+                    // Okay, tricky here. When we displayed the e-mail address
+                    // we did so by tracking from the "firstactive" e-mail address.
+                    // So we need to find that same one to update. If we can't find
+                    // it (or it doesn't exist) then we create a new one.
+                    //
+                    if (string.IsNullOrEmpty(fm.Emails.FirstActive))
+                    {
+                        //
+                        // Create a new e-mail address.
+                        //
+                        PersonEmail pe = new PersonEmail();
+
+                        pe.Active = true;
+                        pe.Email = ((TextBox)phFamilyMembers.FindControl("tbMemberEmail_" + index.ToString())).Text.Trim();
+                        pe.Notes = "";
+                        fm.Emails.Add(pe);
+                    }
+                    else
+                    {
+                        int x;
+
+                        //
+                        // Try to find the old one.
+                        //
+                        for (x = 0; x < fm.Emails.Count; x++)
+                        {
+                            if (fm.Emails[x].Email == fm.Emails.FirstActive)
+                            {
+                                fm.Emails[x].Email = ((TextBox)phFamilyMembers.FindControl("tbMemberEmail_" + index.ToString())).Text.Trim();
+                                break;
+                            }
+                        }
+
+                        //
+                        // See if we need to add a new one.
+                        //
+                        if (x == fm.Emails.Count)
+                        {
+                            PersonEmail pe = new PersonEmail();
+
+                            pe.Active = true;
+                            pe.Email = ((TextBox)phFamilyMembers.FindControl("tbMemberEmail_" + index.ToString())).Text.Trim();
+                            pe.Notes = "";
+                            fm.Emails.Add(pe);
+                        }
+                    }
+
+                    fm.SaveEmails(CurrentPortal.OrganizationID, CurrentUser.Identity.Name);
+                }
+
+                //
+                // Walk through all the attributes and save each one.
+                //
+                SavePersonAttributes(index, fm);
+
+                //
+                // Save everything.
+                //
+                fm.Save(CurrentOrganization.OrganizationID, CurrentUser.Identity.Name, true);
+                fm.Save(CurrentUser.Identity.Name);
+            }
         }
 
         /// <summary>
@@ -382,29 +561,45 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     //
                     // Add in the gender.
                     //
-                    row.Cells.Add(TableCellString(null, p.Gender.ToString()));
+                    if (PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.View))
+                        row.Cells.Add(TableCellString(null, p.Gender.ToString()));
+                    else
+                        row.Cells.Add(TableCellString(null, ""));
 
                     //
                     // Add in the age.
                     //
-                    row.Cells.Add(TableCellString(null, (p.Age != -1 ? p.Age.ToString() : "")));
+                    if (PersonFieldOperationAllowed(PersonFields.Profile_Age, OperationType.View))
+                        row.Cells.Add(TableCellString(null, (p.Age != -1 ? p.Age.ToString() : "")));
+                    else
+                        row.Cells.Add(TableCellString(null, ""));
 
                     //
                     // Add in the grade.
                     //
-                    grade = Person.GetGradeName(Person.CalculateGradeLevel(p.GraduationDate, CurrentOrganization.GradePromotionDate));
-                    row.Cells.Add(TableCellString(null, grade));
+                    if (PersonFieldOperationAllowed(PersonFields.Profile_Grade, OperationType.View))
+                    {
+                        grade = Person.GetGradeName(Person.CalculateGradeLevel(p.GraduationDate, CurrentOrganization.GradePromotionDate));
+                        row.Cells.Add(TableCellString(null, grade));
+                    }
+                    else
+                        row.Cells.Add(TableCellString(null, ""));
 
                     //
                     // Add in the Main/Home phone number.
                     //
-                    phone = p.Phones.FindByType(new Guid("F2A0FBA2-D5AB-421F-A5AB-0C67DB6FD72E"));
-                    if (phone != null && phone.Number != "")
+                    if (PersonFieldOperationAllowed(PersonFields.Profile_Phones, OperationType.View))
                     {
-                        if (phone.Unlisted)
-                            row.Cells.Add(TableCellString(null, phone.Number + " (unlisted)"));
+                        phone = p.Phones.FindByType(new Guid("F2A0FBA2-D5AB-421F-A5AB-0C67DB6FD72E"));
+                        if (phone != null && phone.Number != "")
+                        {
+                            if (phone.Unlisted)
+                                row.Cells.Add(TableCellString(null, phone.Number + " (unlisted)"));
+                            else
+                                row.Cells.Add(TableCellString(null, phone.Number));
+                        }
                         else
-                            row.Cells.Add(TableCellString(null, phone.Number));
+                            row.Cells.Add(TableCellString(null, ""));
                     }
                     else
                         row.Cells.Add(TableCellString(null, ""));
@@ -412,7 +607,10 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     //
                     // Add in the e-mail address.
                     //
-                    row.Cells.Add(TableCellString(null, p.Emails.FirstActive));
+                    if (PersonFieldOperationAllowed(PersonFields.Profile_Emails, OperationType.View))
+                        row.Cells.Add(TableCellString(null, p.Emails.FirstActive));
+                    else
+                        row.Cells.Add(TableCellString(null, ""));
 
                     phSearchResults.Controls.Add(row);
                 }
@@ -424,11 +622,6 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             if (hfFamily.Value != "" && hfFamily.Value != "-1")
             {
                 Family f = new Family(Convert.ToInt32(hfFamily.Value));
-                FamilyMember fm;
-                HtmlTableRow row;
-                HtmlTableCell cell;
-                DropDownList list;
-                string grade;
                 int i;
 
                 //
@@ -437,84 +630,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 phFamilyMembers.Controls.Clear();
                 for (i = 0; i < f.FamilyMembers.Count; i++)
                 {
-                    fm = f.FamilyMembers[i];
-                    row = new HtmlTableRow();
-                    row.Height = "25";
-                    row.VAlign = "top";
-                    phFamilyMembers.Controls.Add(row);
-
-                    //
-                    // Add in a hidden cell for the person ID.
-                    //
-                    row.Cells.Add(TableCellString("textMemberID_" + i.ToString(), fm.PersonID.ToString()));
-                    ((Label)row.Cells[row.Cells.Count - 1].Controls[0]).Style.Add("display", "none");
-
-                    //
-                    // Build some basics about the person.
-                    //
-                    row.Cells.Add(TableCellLookupDropDownList("ddlMemberTitle_" + i.ToString(), new Guid("3394ca53-5791-42c8-b996-1d77c740cf03"), (SetValues ? fm.Title.LookupID.ToString() : null), false));
-                    row.Cells.Add(TableCellTextBox("tbMemberFirstName_" + i.ToString(), (SetValues ? fm.FirstName : null), 65));
-                    row.Cells.Add(TableCellTextBox("tbMemberLastName_" + i.ToString(), (SetValues ? fm.LastName : null), 90));
-                    row.Cells.Add(TableCellLookupDropDownList("ddlMemberFamilyRole_" + i.ToString(), new Guid("d3ce5e62-4ef2-4ff8-a80d-5492bf995459"), (SetValues ? fm.FamilyRole.LookupID.ToString() : null), true));
-                    list = (DropDownList)row.Cells[row.Cells.Count - 1].Controls[0];
-                    list.Attributes["onchange"] = "hdc_toggleFamilyAttributes();";
-                    row.Cells.Add(TableCellEnumDropDownList("ddlMemberGender_" + i.ToString(), typeof(Arena.Enums.Gender), (SetValues ? fm.Gender.ToString() : null)));
-                    row.Cells.Add(TableCellDateTextBox("dtbMemberBirthDate_" + i.ToString(), (SetValues ? fm.BirthDate.ToString("MM/dd/yyyy") : null)));
-
-                    //
-                    // Grade
-                    //
-                    grade = Person.CalculateGradeLevel(fm.GraduationDate, CurrentOrganization.GradePromotionDate).ToString();
-                    cell = new HtmlTableCell();
-                    list = new DropDownList();
-                    cell.Controls.Add(list);
-                    PopulateGrades(list);
-                    list.CssClass = "smallText";
-                    list.ID = "ddlMemberGrade_" + i.ToString();
-                    if (SetValues)
-                        list.SelectedValue = grade;
-                    row.Cells.Add(cell);
-
-                    row.Cells.Add(TableCellLookupDropDownList("ddlMemberMaritalStatus_" + i.ToString(), new Guid("0aad26c7-ad9d-4fe8-96b1-c9bcd033bb5b"), (SetValues ? fm.MaritalStatus.LookupID.ToString() : null), true));
-                    row.Cells.Add(TableCellDateTextBox("dtbMemberAnniversaryDate_" + i.ToString(), (SetValues ? (fm.AnniversaryDate.Year != 1900 ? fm.AnniversaryDate.ToString("MM/dd/yyyy") : "") : null)));
-                    row.Cells.Add(TableCellTextBox("tbMemberEmail_" + i.ToString(), (SetValues ? (fm.Emails.FirstActive != null ? fm.Emails.FirstActive : "") : null), 150));
-
-                    //
-                    // Add in an image with a javascript click handler that will toggle
-                    // the visibility of the extra fields. If you change the image file
-                    // here you must also update the javascript code.
-                    //
-                    Image img = new Image();
-                    img.ImageUrl = BaseUrl() + "Images/information2.gif";
-                    img.ID = "imgMemberShowExtra_" + i.ToString();
-                    img.Attributes.Add("onclick", "hdc_toggleExtraFields(this);");
-                    cell = new HtmlTableCell();
-                    cell.Controls.Add(img);
-                    row.Cells.Add(cell);
-
-                    //
-                    // Add another row for the extra information that will appear
-                    // and disappear depending on first-row selections.
-                    //
-                    cell = TableCellString(null, "extra");
-                    cell.ColSpan = (row.Cells.Count - 2);
-                    row = new HtmlTableRow();
-                    row.Cells.Add(TableCellString(null, ""));
-                    row.Cells[row.Cells.Count - 1].ColSpan = 2;
-                    row.ID = "trMemberExtraFields_" + i.ToString();
-                    row.Cells.Add(cell);
-
-                    //
-                    // Add in all the person attributes.
-                    //
-                    if (PersonAttributeIDsSetting != "")
-                        cell.Controls.Add(AddPersonAttributes(i, fm));
-
-                    //
-                    // Default the row not displayed.
-                    //
-                    row.Style.Add("display", "none");
-                    phFamilyMembers.Controls.Add(row);
+                    BuildFamilyMemberRow(f.FamilyMembers[i], i, SetValues);
                 }
             }
 
@@ -562,84 +678,162 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             for (i = (phFamilyMembers.Controls.Count / 2); i < totalRows; i++)
             {
-                //
-                // Determine if we are adding a new adult row or child row.
-                //
-                if (i < 2)
-                {
-                    lu = new Lookup(new Guid("E410E1A6-8715-4BFB-BF03-1CD18051F815"));
-                }
-                else
-                {
-                    lu = new Lookup(new Guid("9EF9E984-923C-4206-A2CF-17ADAF2E6659"));
-                }
-
-                //
-                // Build the primary data row.
-                //
-                row = new HtmlTableRow();
-                row.Height = "25";
-                row.VAlign = "top";
-
-                //
-                // Add in a hidden cell for the person ID.
-                //
-                row.Cells.Add(TableCellString("textMemberID_" + i.ToString(), "-1"));
-                ((Label)row.Cells[row.Cells.Count - 1].Controls[0]).Style.Add("display", "none");
-
-                row.Cells.Add(TableCellLookupDropDownList("ddlMemberTitle_" + i.ToString(), new Guid("3394ca53-5791-42c8-b996-1d77c740cf03"), (SetValues ? "" : null), false));
-                row.Cells.Add(TableCellTextBox("tbMemberFirstName_" + i.ToString(), (SetValues ? "" : null), 65));
-                row.Cells.Add(TableCellTextBox("tbMemberLastName_" + i.ToString(), (SetValues ? tbFamilyName.Text : null), 90));
-                row.Cells.Add(TableCellLookupDropDownList("ddlMemberFamilyRole_" + i.ToString(), new Guid("d3ce5e62-4ef2-4ff8-a80d-5492bf995459"), (SetValues ? lu.LookupID.ToString() : null), true));
-                list = (DropDownList)row.Cells[row.Cells.Count - 1].Controls[0];
-                list.Attributes["onchange"] = "hdc_toggleFamilyAttributes();";
-                row.Cells.Add(TableCellEnumDropDownList("ddlMemberGender_" + i.ToString(), typeof(Arena.Enums.Gender), (SetValues ? "" : null)));
-                row.Cells.Add(TableCellDateTextBox("dtbMemberBirthDate_" + i.ToString(), (SetValues ? "" : null)));
-
-                //
-                // Grade
-                //
-                cell = new HtmlTableCell();
-                list = new DropDownList();
-                cell.Controls.Add(list);
-                PopulateGrades(list);
-                list.CssClass = "smallText";
-                list.ID = "ddlMemberGrade_" + i.ToString();
-                row.Cells.Add(cell);
-
-                row.Cells.Add(TableCellLookupDropDownList("ddlMemberMaritalStatus_" + i.ToString(), new Guid("0aad26c7-ad9d-4fe8-96b1-c9bcd033bb5b"), (SetValues ? "" : null), true));
-                row.Cells.Add(TableCellDateTextBox("dtbMemberAnniversaryDate_" + i.ToString(), (SetValues ? "" : null)));
-                row.Cells.Add(TableCellTextBox("tbMemberEmail_" + i.ToString(), (SetValues ? "" : null), 150));
-
-                phFamilyMembers.Controls.Add(row);
-
-                //
-                // Add in an image with a javascript click handler that will toggle
-                // the visibility of the extra fields. If you change the image file
-                // here you must also update the javascript code.
-                //
-                Image img = new Image();
-                img.ImageUrl = BaseUrl() + "Images/information2.gif";
-                img.ID = "imgMemberShowExtra_" + i.ToString();
-                img.Attributes.Add("onclick", "hdc_toggleExtraFields(this);");
-                cell = new HtmlTableCell();
-                cell.Controls.Add(img);
-                row.Cells.Add(cell);
-
-                //
-                // Add another row for the extra information that will appear
-                // and disappear depending on first-row selections.
-                //
-                cell = TableCellString(null, "extra");
-                cell.ColSpan = (row.Cells.Count - 2);
-                row = new HtmlTableRow();
-                row.Cells.Add(TableCellString(null, ""));
-                row.Cells[row.Cells.Count - 1].ColSpan = 2;
-                row.ID = "trMemberExtraFields_" + i.ToString();
-                row.Cells.Add(cell);
-                row.Style.Add("display", "none");
-                phFamilyMembers.Controls.Add(row);
+                BuildFamilyMemberRow(null, i, SetValues);
             }
+        }
+
+        private void BuildFamilyMemberRow(FamilyMember fm, int index, bool SetValues)
+        {
+            HtmlTableRow row;
+            HtmlTableCell cell;
+            DropDownList list;
+            Lookup luFamilyRole;
+            string value;
+            bool allowed;
+
+
+            //
+            // Determine if we are adding a new adult row or child row.
+            //
+            if (fm != null)
+                luFamilyRole = fm.FamilyRole;
+            else if (index < 2)
+                luFamilyRole = new Lookup(new Guid("E410E1A6-8715-4BFB-BF03-1CD18051F815"));
+            else
+                luFamilyRole = new Lookup(new Guid("9EF9E984-923C-4206-A2CF-17ADAF2E6659"));
+
+            //
+            // Prepare the row.
+            //
+            row = new HtmlTableRow();
+            row.Height = "25";
+            row.VAlign = "top";
+            phFamilyMembers.Controls.Add(row);
+
+            //
+            // Add in a hidden cell for the person ID.
+            //
+            row.Cells.Add(TableCellString("textMemberID_" + index.ToString(), (fm != null ? fm.PersonID.ToString() : "-1")));
+            ((Label)row.Cells[row.Cells.Count - 1].Controls[0]).Style.Add("display", "none");
+
+            //
+            // Build up the name information for the person.
+            //
+            allowed = PersonFieldOperationAllowed(PersonFields.Profile_Name, OperationType.View);
+            value = (SetValues ? (allowed && fm != null ? fm.Title.LookupID.ToString() : "") : null);
+            row.Cells.Add(TableCellLookupDropDownList("ddlMemberTitle_" + index.ToString(), new Guid("3394ca53-5791-42c8-b996-1d77c740cf03"), value, false));
+            value = (SetValues ? (allowed && fm != null ? fm.FirstName : "") : null);
+            row.Cells.Add(TableCellTextBox("tbMemberFirstName_" + index.ToString(), value, 65));
+            value = (SetValues ? (allowed && fm != null ? fm.LastName : "") : null);
+            row.Cells.Add(TableCellTextBox("tbMemberLastName_" + index.ToString(), value, 90));
+            if (PersonFieldOperationAllowed(PersonFields.Profile_Name, OperationType.Edit) == false)
+            {
+                ((DropDownList)row.Cells[row.Cells.Count - 3].Controls[0]).Enabled = false;
+                ((TextBox)row.Cells[row.Cells.Count - 2].Controls[0]).Enabled = false;
+                ((TextBox)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = false;
+            }
+
+            //
+            // Add in the family role information.
+            //
+            allowed = PersonFieldOperationAllowed(PersonFields.Profile_Family_Information, OperationType.View);
+            value = (SetValues ? (allowed && fm != null ? luFamilyRole.LookupID.ToString() : "") : null);
+            row.Cells.Add(TableCellLookupDropDownList("ddlMemberFamilyRole_" + index.ToString(), new Guid("d3ce5e62-4ef2-4ff8-a80d-5492bf995459"), value, true));
+            list = (DropDownList)row.Cells[row.Cells.Count - 1].Controls[0];
+            list.Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.Edit);
+            list.Attributes["onchange"] = "hdc_toggleFamilyAttributes();";
+
+            //
+            // Add in the gender.
+            //
+            allowed = PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.View);
+            value = (SetValues ? (allowed && fm != null ? ((int)fm.Gender).ToString() : "") : null);
+            row.Cells.Add(TableCellEnumDropDownList("ddlMemberGender_" + index.ToString(), typeof(Arena.Enums.Gender), value));
+            ((DropDownList)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.Edit);
+
+            //
+            // Add in the birth date.
+            //
+            allowed = PersonFieldOperationAllowed(PersonFields.Profile_BirthDate, OperationType.View);
+            value = (SetValues ? (allowed && fm != null ? (fm.BirthDate.Year > 1901 ? fm.BirthDate.ToString("MM/dd/yyyy") : "") : "") : null);
+            row.Cells.Add(TableCellDateTextBox("dtbMemberBirthDate_" + index.ToString(), value));
+            ((DateTextBox)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.Edit);
+
+            //
+            // Add in the grade, a bit custom.
+            //
+            allowed = PersonFieldOperationAllowed(PersonFields.Profile_Grade, OperationType.View);
+            cell = new HtmlTableCell();
+            list = new DropDownList();
+            cell.Controls.Add(list);
+            PopulateGrades(list);
+            list.CssClass = "smallText";
+            list.ID = "ddlMemberGrade_" + index.ToString();
+            if (SetValues)
+                list.SelectedValue = (allowed && fm != null ? Person.CalculateGradeLevel(fm.GraduationDate, CurrentOrganization.GradePromotionDate).ToString() : "");
+            list.Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Grade, OperationType.Edit);
+            row.Cells.Add(cell);
+
+            //
+            // Add in the marital status.
+            //
+            allowed = PersonFieldOperationAllowed(PersonFields.Profile_Marital_Status, OperationType.View);
+            value = (SetValues ? (allowed && fm != null ? fm.MaritalStatus.LookupID.ToString() : "") : null);
+            row.Cells.Add(TableCellLookupDropDownList("ddlMemberMaritalStatus_" + index.ToString(), new Guid("0aad26c7-ad9d-4fe8-96b1-c9bcd033bb5b"), value, true));
+            ((DropDownList)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Marital_Status, OperationType.Edit);
+
+            //
+            // Add in the annivarsary date.
+            //
+            allowed = PersonFieldOperationAllowed(PersonFields.Profile_Anniversary_Date, OperationType.View);
+            value = (SetValues ? (allowed && fm != null ? (fm.AnniversaryDate.Year > 1901 ? fm.AnniversaryDate.ToString("MM/dd/yyyy") : "") : "") : null);
+            row.Cells.Add(TableCellDateTextBox("dtbMemberAnniversaryDate_" + index.ToString(), value));
+            ((DateTextBox)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Anniversary_Date, OperationType.Edit);
+
+            //
+            // Add in the e-mail address.
+            //
+            allowed = PersonFieldOperationAllowed(PersonFields.Profile_Emails, OperationType.View);
+            value = (SetValues ? (allowed && fm != null ? (fm.Emails.FirstActive != null ? fm.Emails.FirstActive : "") : "") : null);
+            row.Cells.Add(TableCellTextBox("tbMemberEmail_" + index.ToString(), value, 150));
+            ((TextBox)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Anniversary_Date, OperationType.Edit);
+
+            //
+            // Add in an image with a javascript click handler that will toggle
+            // the visibility of the extra fields. If you change the image file
+            // here you must also update the javascript code.
+            //
+            Image img = new Image();
+            img.ImageUrl = BaseUrl() + "Images/information2.gif";
+            img.ID = "imgMemberShowExtra_" + index.ToString();
+            img.Attributes.Add("onclick", "hdc_toggleExtraFields(this);");
+            cell = new HtmlTableCell();
+            cell.Controls.Add(img);
+            row.Cells.Add(cell);
+
+            //
+            // Add another row for the extra information that will appear
+            // and disappear depending on first-row selections.
+            //
+            cell = TableCellString(null, "");
+            cell.ColSpan = (row.Cells.Count - 2);
+            row = new HtmlTableRow();
+            row.Cells.Add(TableCellString(null, ""));
+            row.Cells[row.Cells.Count - 1].ColSpan = 2;
+            row.ID = "trMemberExtraFields_" + index.ToString();
+            row.Cells.Add(cell);
+
+            //
+            // Add in all the person attributes.
+            //
+            if (PersonAttributeIDsSetting != "")
+                cell.Controls.Add(BuildPersonAttributes(index, fm, SetValues));
+
+            //
+            // Default the row not displayed.
+            //
+            row.Style.Add("display", "none");
+            phFamilyMembers.Controls.Add(row);
         }
 
         /// <summary>
@@ -666,8 +860,17 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
         private HtmlTableCell TableCellLookupDropDownList(string controlId, Guid guid, string value, bool required)
         {
+            return TableCellLookupDropDownList(controlId, new LookupCollection(guid), value, required);
+        }
+
+        private HtmlTableCell TableCellLookupDropDownList(string controlId, int typeId, string value, bool required)
+        {
+            return TableCellLookupDropDownList(controlId, new LookupCollection(typeId), value, required);
+        }
+
+        private HtmlTableCell TableCellLookupDropDownList(string controlId, LookupCollection lookups, string value, bool required)
+        {
             HtmlTableCell cell = new HtmlTableCell();
-            LookupCollection lookups = new LookupCollection(guid);
             DropDownList list = new DropDownList();
 
             if (required == false)
@@ -788,23 +991,60 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             return url.ToString();
         }
 
-        private HtmlTable AddPersonAttributes(int index, Person p)
+        /// <summary>
+        /// Determines if the current user has access to perform the
+        /// indicated operation on the person field in question.
+        /// </summary>
+        /// <param name="field">The ID number of the PersonField that the user wants access to.</param>
+        /// <param name="operation">The type of access the user needs to proceed.</param>
+        /// <returns>true/false indicating if the operation is allowed.</returns>
+        private bool PersonFieldOperationAllowed(int field, OperationType operation)
+        {
+            PermissionCollection permissions;
+
+            //
+            // Load the permissions.
+            //
+            permissions = new PermissionCollection(ObjectType.PersonField, field);
+
+            return PermissionsOperationAllowed(permissions, operation);
+        }
+
+        /// <summary>
+        /// Checks the PermissionCollection class to determine if the
+        /// indicated operation is allowed for the current user.
+        /// </summary>
+        /// <param name="permissions">The collection of permissions to check. These should be object permissions.</param>
+        /// <param name="operation">The type of access the user needs to proceed.</param>
+        /// <returns>true/false indicating if the operation is allowed.</returns>
+        private bool PermissionsOperationAllowed(PermissionCollection permissions, OperationType operation)
+        {
+            if (FieldSecuritySetting)
+                return permissions.Allowed(operation, CurrentUser);
+            else
+                return true;
+        }
+
+        private HtmlTable BuildPersonAttributes(int index, Person p, bool SetValues)
         {
             HtmlTable table = new HtmlTable();
             string[] attributeIDs = PersonAttributeIDsSetting.Split(new char[] { ',' });
             int i;
 
+            //
+            // Loop through and add each person attribute.
+            //
             for (i = 0; i < attributeIDs.Length; i++)
             {
-                table.Rows.Add(AddPersonAttribute(index, p, Convert.ToInt32(attributeIDs[i])));
+                table.Rows.Add(BuildPersonAttribute(index, p, Convert.ToInt32(attributeIDs[i]), SetValues));
             }
 
             return table;
         }
 
-        private HtmlTableRow AddPersonAttribute(int index, Person p, int attributeID)
+        private HtmlTableRow BuildPersonAttribute(int index, Person p, int attributeID, bool SetValue)
         {
-            PersonAttribute attribute;
+            PersonAttributeEditor attribute;
             HtmlTableRow row = new HtmlTableRow();
 
 
@@ -812,16 +1052,41 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             // Create the attribute to work with.
             //
             if (p != null)
-                attribute = new PersonAttribute(p.PersonID, attributeID);
+                attribute = new PersonAttributeEditor(p.PersonID, attributeID);
             else
-                attribute = new PersonAttribute(attributeID);
+                attribute = new PersonAttributeEditor(attributeID);
 
             //
             // Create the attribute title.
             //
             row.Cells.Add(TableCellString(null, attribute.AttributeName));
 
+            //
+            // Create the data entry portion.
+            //
+            HtmlTableCell cell = new HtmlTableCell();
+            row.Cells.Add(cell);
+            cell.Controls.Add(attribute.WebControl("MemberAttribute_" + index.ToString(), SetValue));
+
             return row;
+        }
+
+        private void SavePersonAttributes(int index, Person p)
+        {
+            PersonAttributeEditor attribute;
+            string[] attributeIDs = PersonAttributeIDsSetting.Split(new char[] { ',' });
+            int i;
+
+            //
+            // Loop through and save each person attribute.
+            //
+            for (i = 0; i < attributeIDs.Length; i++)
+            {
+                attribute = new PersonAttributeEditor(p.PersonID, Convert.ToInt32(attributeIDs[i]));
+
+                attribute.StoreWebControlValue("MemberAttribute_" + index.ToString(), phFamilyMembers);
+                attribute.Save(CurrentPortal.OrganizationID, CurrentUser.Identity.Name);
+            }
         }
 
         #endregion
@@ -833,10 +1098,205 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             btnSearch.Click += new EventHandler(btnSearch_Click);
             btnNewFamily.Click += new EventHandler(btnNewFamily_Click);
             btnAddMore.Click += new EventHandler(btnAddMore_Click);
+            btnSaveFamily.Click += new EventHandler(btnSaveFamily_Click);
+
             base.OnInit(e);
         }
 
         #endregion
+    }
+
+    public class PersonAttributeEditor : PersonAttribute
+    {
+        public PersonAttributeEditor(int attributeID) : base(attributeID)
+        {
+        }
+
+        public PersonAttributeEditor(System.Data.SqlClient.SqlDataReader rdr) : base(rdr)
+        {
+        }
+
+        public PersonAttributeEditor(int personID, int attributeID) : base(personID, attributeID)
+        {
+        }
+
+        public WebControl WebControl(string baseControlId, bool SetValue)
+        {
+            switch (this.AttributeType)
+            {
+                //
+                // Deal with string data types.
+                //
+                case Arena.Enums.DataType.String:
+                    {
+                        TextBox tb = new TextBox();
+
+                        tb.CssClass = "smallText";
+                        tb.ID = baseControlId + "_" + this.AttributeId.ToString();
+                        if (SetValue)
+                            tb.Text = (this.StringValue != null ? this.StringValue : "");
+                        tb.Width = Unit.Pixel(120);
+                        tb.Enabled = (!this.Readonly && OperationAllowed(OperationType.Edit));
+
+                        return tb;
+                    }
+
+                //
+                // Deal with lookup data types.
+                //
+                case Arena.Enums.DataType.Lookup:
+                    {
+                        LookupCollection lookups;
+                        DropDownList list = new DropDownList();
+
+                        list.CssClass = "smallText";
+                        list.ID = baseControlId + "_" + this.AttributeId.ToString();
+                        list.Enabled = !this.Readonly;
+                        if (this.Required == false)
+                            list.Items.Add(new ListItem("", "-1"));
+                        if (this.TypeQualifier != null && this.TypeQualifier != "")
+                        {
+                            lookups = new LookupCollection(Convert.ToInt32(this.TypeQualifier));
+                            lookups.LoadDropDownList(list);
+                        }
+                        if (SetValue)
+                            list.SelectedValue = this.IntValue.ToString();
+
+                        return list;
+                    }
+
+                //
+                // Deal with datetime data types.
+                //
+                case Arena.Enums.DataType.DateTime:
+                    {
+                        DateTextBox dtb = new DateTextBox();
+
+                        dtb.CssClass = "smallText";
+                        dtb.Width = Unit.Pixel(65);
+                        dtb.Enabled = !this.Readonly;
+                        dtb.MaxLength = 10;
+                        dtb.InvalidValueMessage = string.Format("{0} must be a valid date!", this.GroupName + " - " + this.AttributeName);
+                        dtb.ID = baseControlId + "_" + this.AttributeId.ToString();
+                        if (SetValue)
+                            dtb.Text = (this.DateValue.Year > 1901 ? this.DateValue.ToString("MM/dd/yyyy") : "");
+
+                        return dtb;
+                    }
+
+                //
+                // Deal with YesNo data types.
+                //
+                case Arena.Enums.DataType.YesNo:
+                    {
+                        CheckBox cb = new CheckBox();
+
+                        cb.ID = baseControlId + "_" + this.AttributeId.ToString();
+                        cb.CssClass = "smallText";
+                        cb.Checked = (this.IntValue == 1);
+                        cb.Enabled = !this.Readonly;
+
+                        return cb;
+                    }
+
+                default:
+                    {
+                        Label label;
+                        label = new Label();
+                        label.CssClass = "smallText";
+                        label.Text = "Unable to process datatype " + this.AttributeType.ToString();
+
+                        return label;
+                    }
+            }
+        }
+
+        public void StoreWebControlValue(string baseControlId, Control parent)
+        {
+            //
+            // See if we even have access to do this.
+            //
+            if (OperationAllowed(OperationType.Edit) == false)
+                return;
+
+            switch (this.AttributeType)
+            {
+                //
+                // Deal with string data types.
+                //
+                case Arena.Enums.DataType.String:
+                    {
+                        TextBox tb = (TextBox)parent.FindControl(baseControlId + "_" + this.AttributeId.ToString());
+
+                        this.StringValue = tb.Text.Trim();
+
+                        break;
+                    }
+
+                //
+                // Deal with lookup data types.
+                //
+                case Arena.Enums.DataType.Lookup:
+                    {
+                        DropDownList list = (DropDownList)parent.FindControl(baseControlId + "_" + this.AttributeId.ToString());
+
+                        this.IntValue = Convert.ToInt32(list.SelectedValue);
+
+                        break;
+                    }
+
+                //
+                // Deal with datetime data types.
+                //
+                case Arena.Enums.DataType.DateTime:
+                    {
+                        TextBox tb = (TextBox)parent.FindControl(baseControlId + "_" + this.AttributeId.ToString());
+
+                        if (string.IsNullOrEmpty(tb.Text) == false)
+                            this.DateValue = DateTime.Parse(tb.Text);
+                        else
+                            this.DateValue = DateTime.Parse("01/01/1900");
+
+                        break;
+                    }
+
+                //
+                // Deal with YesNo data types.
+                //
+                case Arena.Enums.DataType.YesNo:
+                    {
+                        CheckBox cb = (CheckBox)parent.FindControl(baseControlId + "_" + this.AttributeId.ToString());
+
+                        this.IntValue = Convert.ToInt32(cb.Checked);
+
+                        break;
+                    }
+
+                //
+                // Unknown type, ignore.
+                //
+                default:
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Determines if the current user has access to perform the
+        /// indicated operation on this attribute.
+        /// </summary>
+        /// <param name="operation">The type of access the user needs to proceed.</param>
+        /// <returns>true/false indicating if the operation is allowed.</returns>
+        private bool OperationAllowed(OperationType operation)
+        {
+            PermissionCollection permissions;
+
+            //
+            // Load the permissions.
+            //
+            permissions = new PermissionCollection(ObjectType.Attribute, this.AttributeId);
+
+            return permissions.Allowed(operation, (System.Security.Principal.GenericPrincipal)HttpContext.Current.User);
+        }
     }
 
     public class PersonComparer : IComparer

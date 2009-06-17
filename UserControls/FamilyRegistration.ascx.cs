@@ -238,11 +238,34 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
         void btnSaveFamily_Click(object sender, EventArgs e)
         {
+            PersonAddress pa;
             FamilyMember fm;
+            PersonPhone pp;
+            Lookup addressType = new Lookup(new Guid("CDEC7E95-5B91-40F6-BEA3-FDA9B66A7080"));
+            Family f;
             Label lb;
             int index;
 
 
+            //
+            // Load up the family or create a new one.
+            //
+            if (hfFamily.Value != "-1")
+                f = new Family(Convert.ToInt32(hfFamily.Value));
+            else
+            {
+                f = new Family();
+                f.OrganizationID = CurrentPortal.OrganizationID;
+            }
+
+            //
+            // Set the family name.
+            //
+            f.FamilyName = tbFamilyName.Text.Trim();
+
+            //
+            // Walk each person and process them.
+            //
             for (index = 0; ; index++)
             {
                 lb = (Label)phFamilyMembers.FindControl("textMemberID_" + index.ToString());
@@ -250,12 +273,22 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     break;
 
                 //
+                // Check for a blank record.
+                //
+                if (string.IsNullOrEmpty(((TextBox)phFamilyMembers.FindControl("tbMemberFirstName_" + index.ToString())).Text) ||
+                    string.IsNullOrEmpty(((TextBox)phFamilyMembers.FindControl("tbMemberLastName_" + index.ToString())).Text))
+                    continue;
+
+                //
                 // Find the person or create a new one.
                 //
                 if (lb.Text != "-1")
                     fm = new FamilyMember(Convert.ToInt32(hfFamily.Value), Convert.ToInt32(lb.Text));
                 else
-                    break;
+                {
+                    fm = new FamilyMember();
+                    f.FamilyMembers.Add(fm);
+                }
 
                 //
                 // Ensure some of the basics are set correctly.
@@ -272,6 +305,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 //
                 if (PersonFieldOperationAllowed(PersonFields.Profile_Name, OperationType.Edit))
                 {
+                    fm.Title = new Lookup(Convert.ToInt32(((DropDownList)phFamilyMembers.FindControl("ddlMemberTitle_" + index.ToString())).SelectedValue));
                     fm.FirstName = ((TextBox)phFamilyMembers.FindControl("tbMemberFirstName_" + index.ToString())).Text;
                     fm.NickName = fm.FirstName;
                     fm.LastName = ((TextBox)phFamilyMembers.FindControl("tbMemberLastName_" + index.ToString())).Text;
@@ -393,9 +427,51 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                             fm.Emails.Add(pe);
                         }
                     }
-
-                    fm.SaveEmails(CurrentPortal.OrganizationID, CurrentUser.Identity.Name);
                 }
+
+                //
+                // Update the person's address.
+                //
+                pa = fm.Addresses.FindByType(addressType.LookupID);
+                if (pa == null || pa.AddressID == -1)
+                {
+                    pa = new PersonAddress();
+                    pa.AddressType = addressType;
+                    fm.Addresses.Add(pa);
+                }
+                if (fm.Addresses.PrimaryAddress() == null)
+                    pa.Primary = true;
+                pa.Address.StreetLine1 = tbAddressLine1.Text.Trim();
+                pa.Address.StreetLine2 = tbAddressLine2.Text.Trim();
+                pa.Address.City = tbAddressCity.Text.Trim();
+                pa.Address.State = tbAddressState.Text.Trim();
+                pa.Address.PostalCode = tbAddressPostalCode.Text.Trim();
+                pa.Address.Country = ddlAddressCountry.SelectedValue;
+                pa.Address.Standardize();
+                pa.Address.Geocode(CurrentUser.Identity.Name);
+
+                //
+                // Update the person's phone number.
+                //
+                pp = fm.Phones.FindByType(new Guid("f2a0fba2-d5ab-421f-a5ab-0c67db6fd72e"));
+                if (pp == null || pp.PersonID == -1)
+                {
+                    pp = new PersonPhone();
+                    pp.PhoneType = new Lookup(new Guid("f2a0fba2-d5ab-421f-a5ab-0c67db6fd72e"));
+                    fm.Phones.Add(pp);
+                }
+                pp.Number = tbMainPhone.PhoneNumber.Trim();
+                pp.Unlisted = cbMainPhoneUnlisted.Checked;
+
+                //
+                // Save everything.
+                //
+                f.Save(CurrentUser.Identity.Name);
+                fm.Save(CurrentOrganization.OrganizationID, CurrentUser.Identity.Name, true);
+                fm.SaveEmails(CurrentPortal.OrganizationID, CurrentUser.Identity.Name);
+                fm.SaveAddresses(CurrentPortal.OrganizationID, CurrentUser.Identity.Name);
+                fm.SavePhones(CurrentPortal.OrganizationID, CurrentUser.Identity.Name);
+                fm.Save(CurrentUser.Identity.Name);
 
                 //
                 // Walk through all the attributes and save each one.
@@ -403,11 +479,16 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 SavePersonAttributes(index, fm);
 
                 //
-                // Save everything.
+                // HACK: This is a temporary hack, force the family wizard to reload.
                 //
-                fm.Save(CurrentOrganization.OrganizationID, CurrentUser.Identity.Name, true);
-                fm.Save(CurrentUser.Identity.Name);
+                Session.Remove("fmlyWizard");
+                Session.Remove("ignoreDups");
             }
+
+            //
+            // Sync the family.
+            //
+            f.SyncFamily();
         }
 
         /// <summary>
@@ -652,10 +733,6 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         /// <param name="SetValues">Wether or not to set blank values.</param>
         private void BuildExtraRows(bool SetValues)
         {
-            HtmlTableRow row;
-            HtmlTableCell cell;
-            DropDownList list;
-            Lookup lu;
             Family f;
             int i, totalRows;
 
@@ -724,7 +801,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             row.Cells.Add(TableCellLookupDropDownList("ddlMemberTitle_" + index.ToString(), new Guid("3394ca53-5791-42c8-b996-1d77c740cf03"), value, false));
             value = (SetValues ? (allowed && fm != null ? fm.FirstName : "") : null);
             row.Cells.Add(TableCellTextBox("tbMemberFirstName_" + index.ToString(), value, 65));
-            value = (SetValues ? (allowed && fm != null ? fm.LastName : "") : null);
+            value = (SetValues ? (allowed ? (fm != null ? fm.LastName : tbFamilyName.Text) : "") : null);
             row.Cells.Add(TableCellTextBox("tbMemberLastName_" + index.ToString(), value, 90));
             if (PersonFieldOperationAllowed(PersonFields.Profile_Name, OperationType.Edit) == false)
             {
@@ -737,7 +814,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             // Add in the family role information.
             //
             allowed = PersonFieldOperationAllowed(PersonFields.Profile_Family_Information, OperationType.View);
-            value = (SetValues ? (allowed && fm != null ? luFamilyRole.LookupID.ToString() : "") : null);
+            value = (SetValues ? (allowed ? luFamilyRole.LookupID.ToString() : "") : null);
             row.Cells.Add(TableCellLookupDropDownList("ddlMemberFamilyRole_" + index.ToString(), new Guid("d3ce5e62-4ef2-4ff8-a80d-5492bf995459"), value, true));
             list = (DropDownList)row.Cells[row.Cells.Count - 1].Controls[0];
             list.Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.Edit);
@@ -747,7 +824,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             // Add in the gender.
             //
             allowed = PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.View);
-            value = (SetValues ? (allowed && fm != null ? ((int)fm.Gender).ToString() : "") : null);
+            value = (SetValues ? (allowed ? (fm != null ? ((int)fm.Gender).ToString() : Enum.Format(typeof(Arena.Enums.Gender), Arena.Enums.Gender.Unknown, "d")) : "") : null);
             row.Cells.Add(TableCellEnumDropDownList("ddlMemberGender_" + index.ToString(), typeof(Arena.Enums.Gender), value));
             ((DropDownList)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.Edit);
 
@@ -1001,6 +1078,12 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         private bool PersonFieldOperationAllowed(int field, OperationType operation)
         {
             PermissionCollection permissions;
+
+            //
+            // If field security is not enabled then always allow.
+            //
+            if (FieldSecuritySetting == false)
+                return true;
 
             //
             // Load the permissions.

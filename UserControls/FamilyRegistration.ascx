@@ -18,14 +18,14 @@ function toggleFindFamilyContent()
 
 function showFindFamilyContent()
 {
-    document.getElementById('findFamilyExpanded').style.display = 'table';
+    document.getElementById('findFamilyExpanded').style.display = '';
     document.getElementById('findFamilyCollapsed').style.display = 'none';
 }
 
 function hideFindFamilyContent()
 {
     document.getElementById('findFamilyExpanded').style.display = 'none';
-    document.getElementById('findFamilyCollapsed').style.display = 'table';
+    document.getElementById('findFamilyCollapsed').style.display = '';
 }
 
 function hdc_getElementById(elementID)
@@ -149,7 +149,7 @@ function hdc_toggleExtraFields(ctl)
     obj = document.getElementById(lead + 'trMemberExtraFields_' + memberIdx);
     if (obj.style.display == 'none')
     {
-        obj.style.display = 'table-row';
+        obj.style.display = '';
         ctl.src = ctl.src.substring(0, ctl.src.indexOf('information2.gif')) + 'cancel.gif';
     }
     else
@@ -181,23 +181,27 @@ function hdc_checkSearchSubmit(e)
 </script>
 
 <asp:Panel id="pnlFindFamily" runat="server" Visible="false" Width="100%">
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 30px;">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 30px; table-layout: fixed;">
     <tr>
         <td align="center" style="width: 150px; font-size: 12px; font-weight: bold; background-color: #f0f0ff; padding: 4px; border-top: solid 2px gray; border-left: solid 2px gray; border-right: solid 2px gray;"><span style="cursor: pointer;" onclick="toggleFindFamilyContent();" >Find Family</span></td>
         <td>&nbsp;</td>
-        <td width="10%">&nbsp;</td>
+        <td style="width: 50px;">&nbsp;</td>
     </tr>
     <tr>
         <td colspan="3">
-            <table id="findFamilyExpanded" cellpadding="0" cellspacing="0" border="0" width="100%">
+            <table id="findFamilyExpanded" cellpadding="0" cellspacing="0" border="0" width="100%" style="table-layout: fixed;">
                 <tr>
-                    <td width="158" style="background-color: #f0f0ff; border-left: solid 2px gray;"></td>
-                    <td style="border-bottom: solid 2px gray; border-left: solid 2px gray;"></td>
-                    <td width="5%"></td>
+                    <td style="width: 158px; background-color: #f0f0ff; border-left: solid 2px gray; font-size: 1px;">&nbsp;</td>
+                    <td style="border-bottom: solid 2px gray; border-left: solid 2px gray; font-size: 1px;">&nbsp;</td>
+                    <td style="width: 50px; font-size: 1px;">&nbsp;</td>
                 </tr>
                 <tr>
                     <td colspan="2" style="background-color: #f0f0ff; padding: 4px; border-left: solid 2px gray; border-right: solid 2px gray; border-bottom: solid 2px gray;">
-                        <table border="0" cellpadding="2" cellspacing="0" width="100%" style="margin-top: 10px;">
+                        <table border="0" cellpadding="2" cellspacing="0" width="100%" style="margin-top: 10px; table-layout: fixed;">
+                            <tr>
+                                <td style="width: 150px; font-size: 1px;">&nbsp;</td>
+                                <td style="font-size: 1px;">&nbsp;</td>
+                            </tr>
                             <tr>
                                 <td colspan="2">Please enter only one search criterea at a time.</td>
                             </tr>
@@ -219,10 +223,10 @@ function hdc_checkSearchSubmit(e)
                     <td>&nbsp;</td>
                 </tr>
             </table>
-            <table id="findFamilyCollapsed" cellpadding="0" border="0" cellspacing="0" width="100%" style="display: none;">
+            <table id="findFamilyCollapsed" cellpadding="0" border="0" cellspacing="0" width="100%" style="display: none; table-layout: fixed;">
                 <tr>
-                    <td style="width: 158px; border-bottom: solid 2px gray; border-left: solid 2px gray; border-right: solid 2px gray;"></td>
-                    <td colspan="2"></td>
+                    <td style="width: 158px; background-color: #f0f0ff; border-bottom: solid 2px gray; border-left: solid 2px gray; border-right: solid 2px gray; font-size: 1px;">&nbsp;</td>
+                    <td colspan="2" style="font-size: 1px;">&nbsp;</td>
                 </tr>
             </table>
         </td>
@@ -231,11 +235,11 @@ function hdc_checkSearchSubmit(e)
 </asp:Panel>
 
 <asp:Panel ID="pnlFindResults" runat="server" Visible="false">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 30px;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 30px; table-layout: fixed;">
         <tr>
             <td align="center" style="width: 150px; font-size: 12px; font-weight: bold; background-color: #f0f0ff; padding: 4px; border-top: solid 2px gray; border-left: solid 2px gray; border-right: solid 2px gray;">Search Results</td>
             <td style="border-bottom: solid 2px gray;">&nbsp;</td>
-            <td style="width: 5%">&nbsp;</td>
+            <td style="width: 50px;">&nbsp;</td>
         </tr>
         <tr>
             <td colspan="2" style="background-color: #f0f0ff; padding: 4px; border-left: solid 2px gray; border-right: solid 2px gray; border-bottom: solid 2px gray;">
@@ -257,11 +261,11 @@ function hdc_checkSearchSubmit(e)
 </asp:Panel>
 
 <asp:Panel id="pnlFamily" runat="server" Visible="false">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 30px;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 30px; table-layout: fixed;">
         <tr>
             <td align="center" style="width: 150px; font-size: 12px; font-weight: bold; background-color: #f0f0ff; padding: 4px; border-top: solid 2px gray; border-left: solid 2px gray; border-right: solid 2px gray;">Family Information</td>
             <td style="border-bottom: solid 2px gray;">&nbsp;</td>
-            <td style="width: 5%">&nbsp;</td>
+            <td style="width: 50px;">&nbsp;</td>
         </tr>
         <tr>
             <td colspan="2" style="background-color: #f0f0ff; padding: 4px; border-left: solid 2px gray; border-right: solid 2px gray; border-bottom: solid 2px gray;">
@@ -295,11 +299,11 @@ function hdc_checkSearchSubmit(e)
         </tr>
     </table>
 
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 30px;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 30px; table-layout: fixed;">
         <tr>
             <td align="center" style="width: 150px; font-size: 12px; font-weight: bold; background-color: #f0f0ff; padding: 4px; border-top: solid 2px gray; border-left: solid 2px gray; border-right: solid 2px gray;">Family Members</td>
             <td style="border-bottom: solid 2px gray;">&nbsp;</td>
-            <td style="width: 5%">&nbsp;</td>
+            <td style="width: 50px;">&nbsp;</td>
         </tr>
         <tr>
             <td colspan="2" style="background-color: #f0f0ff; padding: 4px; border-left: solid 2px gray; border-right: solid 2px gray; border-bottom: solid 2px gray;">

@@ -4,8 +4,8 @@
 <asp:HiddenField ID="hfGradeRoleIDs" runat="server" />
 <asp:HiddenField ID="hfEmailRoleIDs" runat="server" />
 <asp:HiddenField ID="hfFamily" runat="server" />
+<asp:HiddenField ID="hfAllowFriend" runat="server" />
 <asp:HiddenField ID="hfExtraCount" runat="server" Value="0" />
-<asp:HiddenField ID="hfStage" runat="server" />
 
 <script type="text/javascript" language="javascript">
 function toggleFindFamilyContent()
@@ -28,9 +28,19 @@ function hideFindFamilyContent()
     document.getElementById('findFamilyCollapsed').style.display = '';
 }
 
+function showFamilyFriend()
+{
+    hdc_getElementById('pnlFamilyFriend').style.display = '';
+}
+
+function hideFamilyFriend()
+{
+    hdc_getElementById('pnlFamilyFriend').style.display = 'none';
+}
+
 function hdc_getElementById(elementID)
 {
-    var i, obj, form = document.forms[0];
+    var i, obj, form = document.forms[0], elements;
 
 
     for (i = 0; i < form.length; i++)
@@ -44,6 +54,15 @@ function hdc_getElementById(elementID)
     for (i = 0; i < document.links.length; i++)
     {
         obj = document.links[i];
+
+        if (obj.id.indexOf(elementID) != -1 && obj.id.substring(obj.id.indexOf(elementID)) == elementID)
+            return obj;
+    }
+    
+    elements = document.getElementsByTagName('*');
+    for (i = 0; i < elements.length; i++)
+    {
+        obj = elements[i];
 
         if (obj.id.indexOf(elementID) != -1 && obj.id.substring(obj.id.indexOf(elementID)) == elementID)
             return obj;
@@ -68,7 +87,7 @@ function hdc_inarray(arrayObj, value)
 function hdc_toggleFamilyAttributes()
 {
     var i, role, x, value, lead;
-    var grade, email, maritalStatus, anniversary, anniversaryCal;
+    var grade, email, maritalStatus, anniversary, anniversaryCal, dateCal;
     var gradeRoles, emailRoles;
 
     emailRoles = hdc_getElementById('hfEmailRoleIDs').value.split(',');
@@ -127,6 +146,13 @@ function hdc_toggleFamilyAttributes()
                 email.style.display = 'none';
         }
     }
+
+    //
+    // Ensure the date picker for family friend is hidden.
+    //
+    dateCal = document.getElementById(lead + 'dtbFriendBirthDate_calImage');
+    if (dateCal)
+        dateCal.style.display = 'none';
 }
 
 //
@@ -139,14 +165,22 @@ function hdc_toggleExtraFields(ctl)
     //
     // Find the member number we are concerned with.
     //
-    lead = ctl.id.split('imgMember')[0];
-    elements = ctl.id.split('_');
-    memberIdx = elements[elements.length - 1];
+    if (ctl.id.search('imgMember') != -1)
+    {
+        lead = ctl.id.split('imgMember')[0];
+        elements = ctl.id.split('_');
+        memberIdx = elements[elements.length - 1];
+        obj = document.getElementById(lead + 'trMemberExtraFields_' + memberIdx);
+    }
+    else if (ctl.id.search('imgFriend') != -1)
+    {
+        lead = ctl.id.split('imgFriend')[0];
+        obj = document.getElementById(lead + 'trFriendExtraFields');
+    }
 
     //
     // Find the extra fields object we are concerned with and toggle them.
     //
-    obj = document.getElementById(lead + 'trMemberExtraFields_' + memberIdx);
     if (obj.style.display == 'none')
     {
         obj.style.display = '';
@@ -183,7 +217,7 @@ function hdc_checkSearchSubmit(e)
 <asp:Panel id="pnlFindFamily" runat="server" Visible="false" Width="100%">
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 30px; table-layout: fixed;">
     <tr>
-        <td align="center" style="width: 150px; font-size: 12px; font-weight: bold; background-color: #f0f0ff; padding: 4px; border-top: solid 2px gray; border-left: solid 2px gray; border-right: solid 2px gray;"><span style="cursor: pointer;" onclick="toggleFindFamilyContent();" >Find Family</span></td>
+        <td align="center" style="width: 150px; font-size: 12px; font-weight: bold; background-color: #f0f0ff; padding-top: 4px; padding-bottom: 4px; border-top: solid 2px gray; border-left: solid 2px gray; border-right: solid 2px gray;"><span style="cursor: pointer;" onclick="toggleFindFamilyContent();" >Find Family</span></td>
         <td>&nbsp;</td>
         <td style="width: 50px;">&nbsp;</td>
     </tr>
@@ -191,7 +225,7 @@ function hdc_checkSearchSubmit(e)
         <td colspan="3">
             <table id="findFamilyExpanded" cellpadding="0" cellspacing="0" border="0" width="100%" style="table-layout: fixed;">
                 <tr>
-                    <td style="width: 158px; background-color: #f0f0ff; border-left: solid 2px gray; font-size: 1px;">&nbsp;</td>
+                    <td style="width: 148px; background-color: #f0f0ff; padding-left: 2px; border-left: solid 2px gray; font-size: 1px;">&nbsp;</td>
                     <td style="border-bottom: solid 2px gray; border-left: solid 2px gray; font-size: 1px;">&nbsp;</td>
                     <td style="width: 50px; font-size: 1px;">&nbsp;</td>
                 </tr>
@@ -203,7 +237,7 @@ function hdc_checkSearchSubmit(e)
                                 <td style="font-size: 1px;">&nbsp;</td>
                             </tr>
                             <tr>
-                                <td colspan="2">Please enter only one search criterea at a time.</td>
+                                <td colspan="2">Please enter only one search criteria at a time.</td>
                             </tr>
                             <tr>
                                 <td align="right" class="smallText" style="width: 150px;">Name:<br />(Partial searches allowed)</td>
@@ -225,7 +259,7 @@ function hdc_checkSearchSubmit(e)
             </table>
             <table id="findFamilyCollapsed" cellpadding="0" border="0" cellspacing="0" width="100%" style="display: none; table-layout: fixed;">
                 <tr>
-                    <td style="width: 158px; background-color: #f0f0ff; border-bottom: solid 2px gray; border-left: solid 2px gray; border-right: solid 2px gray; font-size: 1px;">&nbsp;</td>
+                    <td style="width: 150px; background-color: #f0f0ff; border-bottom: solid 2px gray; border-left: solid 2px gray; border-right: solid 2px gray; font-size: 1px;">&nbsp;</td>
                     <td colspan="2" style="font-size: 1px;">&nbsp;</td>
                 </tr>
             </table>
@@ -275,14 +309,14 @@ function hdc_checkSearchSubmit(e)
                         <td align="left" class="smallText" width: 50%;"><table border="0" cellpadding="0" cellspacing="0"><tr><td align="center"><span style="font-weight: bold;">Main/Home Phone:&nbsp;<br /></span>(Applies to all)</td><td><Arena:PhoneTextBox ID="tbMainPhone" runat="server" CssClass="smallText" ShowExtension="false" Width="100px" Required="false" /><asp:CheckBox ID="cbMainPhoneUnlisted" runat="server" CssClass="smallText" Text="(unlisted)" Checked="false" /></td></tr></table></td>
                     </tr>
                 </table>
-                <br />
-                <table cellpadding="0" cellspacing="4" align="left" border="0">
+                <table cellpadding="0" cellspacing="4" align="center" border="0" width="100%" style="margin-bottom: 10px;">
                     <tr>
                         <td align="left" class="smallText" style="width: 205px;"><span style="font-weight: bold;">Main/Home Address</span><span> (Applies to all)</span></td>
                         <td align="left" class="smallText" style="font-weight: bold; width: 105px;">City</td>
                         <td align="left" class="smallText" style="font-weight: bold; width: 40px">St</td>
                         <td align="left" class="smallText" style="font-weight: bold; width: 95px;">Postal Code</td>
                         <td align="left" class="smallText" style="font-weight: bold; width: 170px;">Country</td>
+                        <td>&nbsp;</td>
                     </tr>
                     <tr>
                         <td class="smallText"><asp:TextBox ID="tbAddressLine1" width="200px" runat="server" CssClass="smallText" MaxLength="100"></asp:TextBox></td>
@@ -290,24 +324,14 @@ function hdc_checkSearchSubmit(e)
                         <td class="smallText"><asp:TextBox ID="tbAddressState" width="35px" runat="server" CssClass="smallText" MaxLength="2"></asp:TextBox></td>
                         <td class="smallText"><asp:TextBox ID="tbAddressPostalCode" width="90px" runat="server" CssClass="smallText" MaxLength="10"></asp:TextBox></td>
                         <td class="smallText"><asp:DropDownList ID="ddlAddressCountry" runat="server" CssClass="smallText" Width="120" Height="18"></asp:DropDownList><asp:PlaceHolder ID="phAddressCountry" runat="server"></asp:PlaceHolder></td>
+                        <td>&nbsp;</td>
                     </tr>
                     <tr>
                         <td class="smallText"><asp:TextBox ID="tbAddressLine2" width="200px" runat="server" CssClass="smallText" MaxLength="100"></asp:TextBox></td>
                     </tr>
                 </table>
-            </td>
-        </tr>
-    </table>
-
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 30px; table-layout: fixed;">
-        <tr>
-            <td align="center" style="width: 150px; font-size: 12px; font-weight: bold; background-color: #f0f0ff; padding: 4px; border-top: solid 2px gray; border-left: solid 2px gray; border-right: solid 2px gray;">Family Members</td>
-            <td style="border-bottom: solid 2px gray;">&nbsp;</td>
-            <td style="width: 50px;">&nbsp;</td>
-        </tr>
-        <tr>
-            <td colspan="2" style="background-color: #f0f0ff; padding: 4px; border-left: solid 2px gray; border-right: solid 2px gray; border-bottom: solid 2px gray;">
-                <table id="tblFamily" cellpadding="0" cellspacing="0" align="center" border="0" style="width: 100%; margin-bottom: 15px;">
+                <span class="smallText" style="font-size: 11px; font-weight: bold;">Family Members:</span>
+                <table cellpadding="0" cellspacing="0" align="center" border="0" width="100%" style="margin-bottom: 15px;">
                     <tr>
                         <td style="width: 0px"></td>
                         <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Title</td>
@@ -327,11 +351,82 @@ function hdc_checkSearchSubmit(e)
 
                 <table border="0" cellpadding="0" cellspacing="0" width="100%">
                     <tr>
-                        <td align="left"><asp:LinkButton ID="btnAddMore" runat="server" CssClass="smallText" Text="Add More"></asp:LinkButton></td>
-                        <td align="right"><asp:LinkButton ID="btnSaveFamily" runat="server" CssClass="smallText" Text="Save"></asp:LinkButton></td>
+                        <td align="left" width="100px"><asp:LinkButton ID="btnAddMore" runat="server" CssClass="smallText" Text="Add More"></asp:LinkButton></td>
+                        <td align="left" width="100px"><a href="#" id="linkShowFriend" class="smallText" onclick="showFamilyFriend(); return false;" style="display: none;">Add Friend</a></td>
+                        <td align="right"><asp:LinkButton ID="btnSaveFamily" runat="server" CssClass="smallText" Text="Save Family"></asp:LinkButton></td>
                     </tr>
                 </table>
             </td>
         </tr>
     </table>
 </asp:Panel>
+
+<asp:Panel id="pnlFamilyFriend" runat="server" Visible="true" style="display: none;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 30px; table-layout: fixed;">
+        <tr>
+            <td align="center" style="width: 150px; font-size: 12px; font-weight: bold; background-color: #f0f0ff; padding: 4px; border-top: solid 2px gray; border-left: solid 2px gray; border-right: solid 2px gray;">Add Family Friend</td>
+            <td style="border-bottom: solid 2px gray;">&nbsp;</td>
+            <td style="width: 50px;">&nbsp;</td>
+        </tr>
+        <tr>
+            <td colspan="2" style="background-color: #f0f0ff; padding: 4px; border-left: solid 2px gray; border-right: solid 2px gray; border-bottom: solid 2px gray;">
+                <table cellpadding="0" cellspacing="0" align="center" border="0" style="width: 100%; margin-bottom: 15px;">
+                    <tr>
+                        <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Title</td>
+                        <td align="left" valign="bottom" class="smallText" style="font-weight: bold">First Name</td>
+                        <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Last Name</td>
+                        <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Gender</td>
+                        <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Birth Date</td>
+                        <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Grade</td>
+                        <td align="left" valign="bottom" class="smallText" style="font-weight: normal">E-mail</td>
+                        <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Phone</td>
+                    </tr>
+                    <asp:PlaceHolder ID="phFamilyFriend" runat="server"></asp:PlaceHolder>
+                </table>
+
+                <table cellpadding="0" cellspacing="4" align="center" border="0" width="100%" style="margin-bottom: 15px;">
+                    <tr>
+                        <td align="left" class="smallText" style="width: 205px;"><span style="font-weight: bold;">Main/Home Address</span></td>
+                        <td align="left" class="smallText" style="font-weight: bold; width: 105px;">City</td>
+                        <td align="left" class="smallText" style="font-weight: bold; width: 40px">St</td>
+                        <td align="left" class="smallText" style="font-weight: bold; width: 95px;">Postal Code</td>
+                        <td align="left" class="smallText" style="font-weight: bold; width: 170px;">Country</td>
+                        <td>&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td class="smallText"><asp:TextBox ID="tbFriendAddressLine1" width="200px" runat="server" CssClass="smallText" MaxLength="100"></asp:TextBox></td>
+                        <td class="smallText"><asp:TextBox ID="tbFriendAddressCity" width="100px" runat="server" CssClass="smallText" MaxLength="100"></asp:TextBox></td>
+                        <td class="smallText"><asp:TextBox ID="tbFriendAddressState" width="35px" runat="server" CssClass="smallText" MaxLength="2"></asp:TextBox></td>
+                        <td class="smallText"><asp:TextBox ID="tbFriendAddressPostalCode" width="90px" runat="server" CssClass="smallText" MaxLength="10"></asp:TextBox></td>
+                        <td class="smallText"><asp:DropDownList ID="ddlFriendAddressCountry" runat="server" CssClass="smallText" Width="120" Height="18"></asp:DropDownList><asp:PlaceHolder ID="PlaceHolder1" runat="server"></asp:PlaceHolder></td>
+                        <td>&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td class="smallText"><asp:TextBox ID="tbFriendAddressLine2" width="200px" runat="server" CssClass="smallText" MaxLength="100"></asp:TextBox></td>
+                    </tr>
+                </table>
+
+                <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                        <td align="left"><a href="#" class="smallText" onclick="hideFamilyFriend(); return false;">Cancel</a></td>
+                        <td align="right"><asp:LinkButton ID="btnSaveFriend" runat="server" CssClass="smallText" Text="Save Friend"></asp:LinkButton></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</asp:Panel>
+
+<script type="text/javascript" language="javascript">
+var obj, family, allowFriend;
+
+//
+// Auto-load: Ensure the "Add Friend" link only shows if we have
+// an existing family.
+//
+obj = hdc_getElementById('linkShowFriend');
+family = hdc_getElementById('hfFamily');
+allowFriend = hdc_getElementById('hfAllowFriend');
+if (obj && family.value != '' && family.value != '-1' && allowFriend.value == '1')
+    obj.style.display = '';
+</script>

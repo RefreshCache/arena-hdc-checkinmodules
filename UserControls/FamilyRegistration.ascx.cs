@@ -76,6 +76,9 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         [BooleanSetting("Field Security", "Enable field level security for this module. This setting behaves the same as the PersonDetails module.", true, false)]
         public bool FieldSecuritySetting { get { return Convert.ToBoolean(Setting("FieldSecurity", "false", true)); } }
 
+        [NumericSetting("Friend Relationship ID", "The relationship ID to be used when adding a family friend. The relationship is added from the friend to the head of family.", false)]
+        public int FriendRelationshipIDSetting { get { return Convert.ToInt32(Setting("FriendRelationshipID", "-1", false)); } }
+
         #endregion
 
         #region Event Handlers
@@ -92,6 +95,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             // Enable or disable some basic functionality depending on settings.
             //
             pnlFindFamily.Visible = AllowSearchSetting;
+            pnlFamilyFriend.Visible = (FriendRelationshipIDSetting != -1);
 
             if (!IsPostBack)
             {
@@ -100,14 +104,23 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 // country. Also select the default country.
                 //
                 Utilities.LoadCountries(ddlAddressCountry);
+                Utilities.LoadCountries(ddlFriendAddressCountry);
                 if (CountryCodeSetting != null && CountryCodeSetting != "")
+                {
                     ddlAddressCountry.SelectedValue = CountryCodeSetting;
+                    ddlFriendAddressCountry.SelectedValue = CountryCodeSetting;
+                }
 
                 //
                 // Set the family roles.
                 //
                 hfGradeRoleIDs.Value = GradeFamilyRoleIDsSetting.Trim();
                 hfEmailRoleIDs.Value = EmailFamilyRoleIDsSetting.Trim();
+
+                //
+                // Enable or disable javascript control of family friends.
+                //
+                hfAllowFriend.Value = (FriendRelationshipIDSetting != -1 ? "1" : "0");
             }
 
             Build_Page(!IsPostBack);
@@ -352,10 +365,14 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 //
                 // Save the person's marital status.
                 //
-                if (PersonFieldOperationAllowed(PersonFields.Profile_Marital_Status, OperationType.Edit) &&
-                    fm.FamilyRole.Value.ToLower() == "adult")
+                if (PersonFieldOperationAllowed(PersonFields.Profile_Marital_Status, OperationType.Edit))
                 {
-                    fm.MaritalStatus = new Lookup(Convert.ToInt32(((DropDownList)phFamilyMembers.FindControl("ddlMemberMaritalStatus_" + index.ToString())).SelectedValue));
+                    if (fm.FamilyRole.Value.ToLower() == "adult")
+                    {
+                        fm.MaritalStatus = new Lookup(Convert.ToInt32(((DropDownList)phFamilyMembers.FindControl("ddlMemberMaritalStatus_" + index.ToString())).SelectedValue));
+                    }
+                    else
+                        fm.MaritalStatus = new Lookup(new Guid("fe219925-f787-4e7e-9ecb-de00caa0e73d"));
                 }
                 else if (fm.PersonID == -1)
                     fm.MaritalStatus = new Lookup(new Guid("9C000CF2-677B-4725-981E-BD555FDAFB30"));
@@ -432,36 +449,42 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 //
                 // Update the person's address.
                 //
-                pa = fm.Addresses.FindByType(addressType.LookupID);
-                if (pa == null || pa.AddressID == -1)
+                if (PersonFieldOperationAllowed(PersonFields.Profile_Addresses, OperationType.Edit))
                 {
-                    pa = new PersonAddress();
-                    pa.AddressType = addressType;
-                    fm.Addresses.Add(pa);
+                    pa = fm.Addresses.FindByType(addressType.LookupID);
+                    if (pa == null || pa.AddressID == -1)
+                    {
+                        pa = new PersonAddress();
+                        pa.AddressType = addressType;
+                        fm.Addresses.Add(pa);
+                    }
+                    if (fm.Addresses.PrimaryAddress() == null)
+                        pa.Primary = true;
+                    pa.Address.StreetLine1 = tbAddressLine1.Text.Trim();
+                    pa.Address.StreetLine2 = tbAddressLine2.Text.Trim();
+                    pa.Address.City = tbAddressCity.Text.Trim();
+                    pa.Address.State = tbAddressState.Text.Trim();
+                    pa.Address.PostalCode = tbAddressPostalCode.Text.Trim();
+                    pa.Address.Country = ddlAddressCountry.SelectedValue;
+                    pa.Address.Standardize();
+                    pa.Address.Geocode(CurrentUser.Identity.Name);
                 }
-                if (fm.Addresses.PrimaryAddress() == null)
-                    pa.Primary = true;
-                pa.Address.StreetLine1 = tbAddressLine1.Text.Trim();
-                pa.Address.StreetLine2 = tbAddressLine2.Text.Trim();
-                pa.Address.City = tbAddressCity.Text.Trim();
-                pa.Address.State = tbAddressState.Text.Trim();
-                pa.Address.PostalCode = tbAddressPostalCode.Text.Trim();
-                pa.Address.Country = ddlAddressCountry.SelectedValue;
-                pa.Address.Standardize();
-                pa.Address.Geocode(CurrentUser.Identity.Name);
 
                 //
                 // Update the person's phone number.
                 //
-                pp = fm.Phones.FindByType(new Guid("f2a0fba2-d5ab-421f-a5ab-0c67db6fd72e"));
-                if (pp == null || pp.PersonID == -1)
+                if (PersonFieldOperationAllowed(PersonFields.Profile_Phones, OperationType.Edit))
                 {
-                    pp = new PersonPhone();
-                    pp.PhoneType = new Lookup(new Guid("f2a0fba2-d5ab-421f-a5ab-0c67db6fd72e"));
-                    fm.Phones.Add(pp);
+                    pp = fm.Phones.FindByType(new Guid("f2a0fba2-d5ab-421f-a5ab-0c67db6fd72e"));
+                    if (pp == null || pp.PersonID == -1)
+                    {
+                        pp = new PersonPhone();
+                        pp.PhoneType = new Lookup(new Guid("f2a0fba2-d5ab-421f-a5ab-0c67db6fd72e"));
+                        fm.Phones.Add(pp);
+                    }
+                    pp.Number = tbMainPhone.PhoneNumber.Trim();
+                    pp.Unlisted = cbMainPhoneUnlisted.Checked;
                 }
-                pp.Number = tbMainPhone.PhoneNumber.Trim();
-                pp.Unlisted = cbMainPhoneUnlisted.Checked;
 
                 //
                 // Save everything.
@@ -476,7 +499,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 //
                 // Walk through all the attributes and save each one.
                 //
-                SavePersonAttributes(index, fm);
+                SavePersonAttributes(index, fm, phFamilyMembers);
 
                 //
                 // HACK: This is a temporary hack, force the family wizard to reload.
@@ -489,6 +512,175 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             // Sync the family.
             //
             f.SyncFamily();
+        }
+
+        void btnSaveFriend_Click(object sender, EventArgs e)
+        {
+            PersonAddress pa;
+            FamilyMember fm;
+            Relationship r;
+            PersonPhone pp;
+            Lookup addressType = new Lookup(new Guid("CDEC7E95-5B91-40F6-BEA3-FDA9B66A7080"));
+            Family f;
+
+
+            //
+            // Check for a blank record.
+            //
+            if (!string.IsNullOrEmpty(((TextBox)phFamilyFriend.FindControl("tbFriendFirstName")).Text) &&
+                !string.IsNullOrEmpty(((TextBox)phFamilyFriend.FindControl("tbFriendLastName")).Text))
+            {
+                //
+                // For a family friend, always create a new family
+                // to hold the friend.
+                //
+                f = new Family();
+                f.OrganizationID = CurrentPortal.OrganizationID;
+                f.FamilyName = ((TextBox)phFamilyFriend.FindControl("tbFriendLastName")).Text.Trim();
+
+                //
+                // Create a new person.
+                //
+                fm = new FamilyMember();
+                f.FamilyMembers.Add(fm);
+
+                //
+                // Ensure some of the basics are set correctly.
+                //
+                fm.Campus = new Campus(NewMemberCampusSetting);
+                fm.MemberStatus = new Lookup(NewMemberStatusSetting);
+                fm.RecordStatus = Arena.Enums.RecordStatus.Pending;
+
+                //
+                // Save the person's name information.
+                //
+                if (PersonFieldOperationAllowed(PersonFields.Profile_Name, OperationType.Edit))
+                {
+                    fm.Title = new Lookup(Convert.ToInt32(((DropDownList)phFamilyFriend.FindControl("ddlFriendTitle")).SelectedValue));
+                    fm.FirstName = ((TextBox)phFamilyFriend.FindControl("tbFriendFirstName")).Text;
+                    fm.NickName = fm.FirstName;
+                    fm.LastName = ((TextBox)phFamilyFriend.FindControl("tbFriendLastName")).Text;
+                }
+
+                //
+                // Save the person's family role.
+                //
+                fm.FamilyRole = new Lookup(new Guid("9ef9e984-923c-4206-a2cf-17adaf2e6659"));
+
+                //
+                // Save the person's gender.
+                //
+                if (PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.Edit))
+                    fm.Gender = (Arena.Enums.Gender)Enum.Parse(typeof(Arena.Enums.Gender), ((DropDownList)phFamilyFriend.FindControl("ddlFriendGender")).SelectedValue);
+                else if (fm.PersonID == -1)
+                    fm.Gender = Arena.Enums.Gender.Unknown;
+
+                //
+                // Save the person's birth date.
+                //
+                if (PersonFieldOperationAllowed(PersonFields.Profile_BirthDate, OperationType.Edit))
+                {
+                    TextBox tb = (TextBox)phFamilyFriend.FindControl("dtbFriendBirthDate");
+
+                    if (string.IsNullOrEmpty(tb.Text) == false)
+                        fm.BirthDate = DateTime.Parse(tb.Text);
+                    else
+                        fm.BirthDate = DateTime.Parse("1/1/1900");
+                }
+
+                //
+                // Save the person's grade.
+                //
+                if (PersonFieldOperationAllowed(PersonFields.Profile_Grade, OperationType.Edit))
+                {
+                    fm.GraduationDate = Person.CalculateGraduationYear(Convert.ToInt32(((DropDownList)phFamilyFriend.FindControl("ddlFriendGrade")).SelectedValue), CurrentOrganization.GradePromotionDate);
+                }
+
+                //
+                // Save the person's marital status.
+                //
+                fm.MaritalStatus = new Lookup(new Guid("fe219925-f787-4e7e-9ecb-de00caa0e73d"));
+
+                //
+                // Save the person's e-mail address.
+                //
+                if (PersonFieldOperationAllowed(PersonFields.Profile_Emails, OperationType.Edit))
+                {
+                    if (String.IsNullOrEmpty(((TextBox)phFamilyFriend.FindControl("tbFriendEmail")).Text) == false)
+                    {
+                        //
+                        // Create a new e-mail address.
+                        //
+                        PersonEmail pe = new PersonEmail();
+
+                        pe.Active = true;
+                        pe.Email = ((TextBox)phFamilyFriend.FindControl("tbFriendEmail")).Text.Trim();
+                        pe.Notes = "";
+                        fm.Emails.Add(pe);
+                    }
+                }
+
+                //
+                // Update the person's address.
+                //
+                if (PersonFieldOperationAllowed(PersonFields.Profile_Addresses, OperationType.Edit))
+                {
+                    pa = new PersonAddress();
+                    pa.AddressType = addressType;
+                    fm.Addresses.Add(pa);
+                    pa.Primary = true;
+                    pa.Address.StreetLine1 = tbFriendAddressLine1.Text.Trim();
+                    pa.Address.StreetLine2 = tbFriendAddressLine2.Text.Trim();
+                    pa.Address.City = tbFriendAddressCity.Text.Trim();
+                    pa.Address.State = tbFriendAddressState.Text.Trim();
+                    pa.Address.PostalCode = tbFriendAddressPostalCode.Text.Trim();
+                    pa.Address.Country = ddlFriendAddressCountry.SelectedValue;
+                    pa.Address.Standardize();
+                    pa.Address.Geocode(CurrentUser.Identity.Name);
+                }
+
+                //
+                // Update the person's phone number.
+                //
+                if (PersonFieldOperationAllowed(PersonFields.Profile_Phones, OperationType.Edit))
+                {
+                    pp = new PersonPhone();
+                    pp.PhoneType = new Lookup(new Guid("f2a0fba2-d5ab-421f-a5ab-0c67db6fd72e"));
+                    fm.Phones.Add(pp);
+                    pp.Number = ((PhoneTextBox)phFamilyFriend.FindControl("ptbFriendPhone")).PhoneNumber.Trim();
+                    pp.Unlisted = ((CheckBox)phFamilyFriend.FindControl("cbFriendPhoneUnlisted")).Checked;
+                }
+
+                //
+                // Add the relationship to the real families head of family.
+                //
+                r = new Relationship();
+                r.Person = fm;
+                r.RelatedPerson = new Family(Int32.Parse(hfFamily.Value)).FamilyHead;
+                r.RelationshipTypeId = FriendRelationshipIDSetting;
+                fm.Relationships.Add(r);
+
+                //
+                // Save everything.
+                //
+                f.Save(CurrentUser.Identity.Name);
+                fm.Save(CurrentOrganization.OrganizationID, CurrentUser.Identity.Name, true);
+                fm.SaveEmails(CurrentPortal.OrganizationID, CurrentUser.Identity.Name);
+                fm.SaveAddresses(CurrentPortal.OrganizationID, CurrentUser.Identity.Name);
+                fm.SavePhones(CurrentPortal.OrganizationID, CurrentUser.Identity.Name);
+                fm.SaveRelationships(CurrentPortal.OrganizationID, CurrentUser.Identity.Name);
+                fm.Save(CurrentUser.Identity.Name);
+
+                //
+                // Walk through all the attributes and save each one.
+                //
+                SavePersonAttributes(9999, fm, phFamilyFriend);
+
+                //
+                // Sync the family.
+                //
+                f.SyncFamily();
+            }
         }
 
         /// <summary>
@@ -715,8 +907,12 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 }
             }
 
+            //
+            // Build up the extra rows and the family friend.
+            //
             BuildExtraRows(SetValues);
             Page.ClientScript.RegisterStartupScript(typeof(Page), "hdc_toggleFamilyAttributes", "<script>hdc_toggleFamilyAttributes();</script>");
+            BuildFamilyFriend(SetValues);
 
             //
             // Make sure all the panels are in the correct state.
@@ -873,7 +1069,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             allowed = PersonFieldOperationAllowed(PersonFields.Profile_Emails, OperationType.View);
             value = (SetValues ? (allowed && fm != null ? (fm.Emails.FirstActive != null ? fm.Emails.FirstActive : "") : "") : null);
             row.Cells.Add(TableCellTextBox("tbMemberEmail_" + index.ToString(), value, 150));
-            ((TextBox)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Anniversary_Date, OperationType.Edit);
+            ((TextBox)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Emails, OperationType.Edit);
 
             //
             // Add in an image with a javascript click handler that will toggle
@@ -911,6 +1107,125 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             row.Style.Add("display", "none");
             phFamilyMembers.Controls.Add(row);
+        }
+
+        private void BuildFamilyFriend(bool SetValues)
+        {
+            HtmlTableRow row;
+            HtmlTableCell cell;
+            DropDownList list;
+            string value;
+
+
+            //
+            // Prepare the row.
+            //
+            row = new HtmlTableRow();
+            row.Height = "25";
+            row.VAlign = "top";
+            phFamilyFriend.Controls.Clear();
+            phFamilyFriend.Controls.Add(row);
+
+            //
+            // Build up the name information for the person.
+            //
+            row.Cells.Add(TableCellLookupDropDownList("ddlFriendTitle", new Guid("3394ca53-5791-42c8-b996-1d77c740cf03"), (SetValues ? "" : null), false));
+            row.Cells.Add(TableCellTextBox("tbFriendFirstName", (SetValues ? "" : null), 65));
+            row.Cells.Add(TableCellTextBox("tbFriendLastName", (SetValues ? "" : null), 90));
+            if (PersonFieldOperationAllowed(PersonFields.Profile_Name, OperationType.Edit) == false)
+            {
+                ((DropDownList)row.Cells[row.Cells.Count - 3].Controls[0]).Enabled = false;
+                ((TextBox)row.Cells[row.Cells.Count - 2].Controls[0]).Enabled = false;
+                ((TextBox)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = false;
+            }
+
+            //
+            // Add in the gender.
+            //
+            value = (SetValues ? Enum.Format(typeof(Arena.Enums.Gender), Arena.Enums.Gender.Unknown, "d") : null);
+            row.Cells.Add(TableCellEnumDropDownList("ddlFriendGender", typeof(Arena.Enums.Gender), value));
+            ((DropDownList)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.Edit);
+
+            //
+            // Add in the birth date.
+            //
+            row.Cells.Add(TableCellDateTextBox("dtbFriendBirthDate", (SetValues ? "" : null)));
+            ((DateTextBox)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.Edit);
+
+            //
+            // Add in the grade, a bit custom.
+            //
+            cell = new HtmlTableCell();
+            list = new DropDownList();
+            cell.Controls.Add(list);
+            PopulateGrades(list);
+            list.CssClass = "smallText";
+            list.ID = "ddlFriendGrade";
+            if (SetValues)
+                list.SelectedValue = "";
+            list.Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Grade, OperationType.Edit);
+            row.Cells.Add(cell);
+
+            //
+            // Add in the e-mail address.
+            //
+            row.Cells.Add(TableCellTextBox("tbFriendEmail", (SetValues ? "" : null), 150));
+            ((TextBox)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Emails, OperationType.Edit);
+            
+            //
+            // Add in the phone number. Also a custom jobby.
+            //
+            cell = new HtmlTableCell();
+            PhoneTextBox ptb = new PhoneTextBox();
+            ptb.ID = "ptbFriendPhone";
+            ptb.CssClass = "smallText";
+            ptb.ShowExtension = false;
+            ptb.Width = Unit.Pixel(100);
+            ptb.Required = false;
+            cell.Controls.Add(ptb);
+            CheckBox cb = new CheckBox();
+            cb.ID = "cbFriendPhoneUnlisted";
+            cb.CssClass = "smallText";
+            cb.Text = "(unlisted)";
+            cb.Checked = false;
+            cell.Controls.Add(cb);
+            row.Cells.Add(cell);
+
+            //
+            // Add in an image with a javascript click handler that will toggle
+            // the visibility of the extra fields. If you change the image file
+            // here you must also update the javascript code.
+            //
+            Image img = new Image();
+            img.ImageUrl = BaseUrl() + "Images/information2.gif";
+            img.ID = "imgFriendShowExtra";
+            img.Attributes.Add("onclick", "hdc_toggleExtraFields(this);");
+            cell = new HtmlTableCell();
+            cell.Controls.Add(img);
+            row.Cells.Add(cell);
+
+            //
+            // Add another row for the extra information that will appear
+            // and disappear depending on first-row selections.
+            //
+            cell = TableCellString(null, "");
+            cell.ColSpan = (row.Cells.Count - 2);
+            row = new HtmlTableRow();
+            row.Cells.Add(TableCellString(null, ""));
+            row.ID = "trFriendExtraFields";
+            row.Cells.Add(cell);
+
+            //
+            // Add in all the person attributes.
+            //
+            if (PersonAttributeIDsSetting != "")
+                cell.Controls.Add(BuildPersonAttributes(9999, null, SetValues));
+
+            //
+            // Default the row not displayed.
+            //
+            row.Style.Add("display", "none");
+            phFamilyFriend.Controls.Add(row);
         }
 
         /// <summary>
@@ -1154,7 +1469,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             return row;
         }
 
-        private void SavePersonAttributes(int index, Person p)
+        private void SavePersonAttributes(int index, Person p, Control parent)
         {
             PersonAttributeEditor attribute;
             string[] attributeIDs = PersonAttributeIDsSetting.Split(new char[] { ',' });
@@ -1167,7 +1482,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             {
                 attribute = new PersonAttributeEditor(p.PersonID, Convert.ToInt32(attributeIDs[i]));
 
-                attribute.StoreWebControlValue("MemberAttribute_" + index.ToString(), phFamilyMembers);
+                attribute.StoreWebControlValue("MemberAttribute_" + index.ToString(), parent);
                 attribute.Save(CurrentPortal.OrganizationID, CurrentUser.Identity.Name);
             }
         }
@@ -1182,6 +1497,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             btnNewFamily.Click += new EventHandler(btnNewFamily_Click);
             btnAddMore.Click += new EventHandler(btnAddMore_Click);
             btnSaveFamily.Click += new EventHandler(btnSaveFamily_Click);
+            btnSaveFriend.Click += new EventHandler(btnSaveFriend_Click);
 
             base.OnInit(e);
         }

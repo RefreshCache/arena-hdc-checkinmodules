@@ -212,6 +212,37 @@ function hdc_checkSearchSubmit(e)
         return false;
     }
 }
+
+//
+// Partially fade the message text in the given object.
+//
+function hdc_fadeObjectOut(element)
+{
+    var value, o = document.getElementById(element);
+
+    if (o.filters)
+    {
+        o.style.visibility = 'hidden';
+        return;
+    }
+    if (o.style.opacity == '')
+        value = 1;
+    else
+        value = parseFloat(o.style.opacity);
+
+    value -= 0.02;
+    if (value < 0)
+    {
+        o.style.opacity = '0';
+        o.style.visibility = 'hidden';
+    }
+    else
+    {
+        o.style.opacity = value;
+        setTimeout('hdc_fadeObjectOut(\'' + element + '\')', 20);
+    }
+}
+
 </script>
 
 <asp:Panel id="pnlFindFamily" runat="server" Visible="false" Width="100%">
@@ -304,6 +335,7 @@ function hdc_checkSearchSubmit(e)
         <tr>
             <td colspan="2" style="background-color: #f0f0ff; padding: 4px; border-left: solid 2px gray; border-right: solid 2px gray; border-bottom: solid 2px gray;">
                 <table cellpadding="0" cellspacing="2" align="center" border="0" width="100%" style="padding-top: 10px;">
+                    <asp:PlaceHolder ID="phFamilySaveMessage" runat="server"></asp:PlaceHolder>
                     <tr>
                         <td align="left" class="smallText" style="font-weight: bold; width: 50%;">Family Name:&nbsp;<asp:TextBox ID="tbFamilyName" runat="server" CssClass="smallText" MaxLength="100" Width="150px" TabIndex="0"></asp:TextBox></td>
                         <td align="left" class="smallText" width: 50%;"><table border="0" cellpadding="0" cellspacing="0"><tr><td align="center"><span style="font-weight: bold;">Main/Home Phone:&nbsp;<br /></span>(Applies to all)</td><td><Arena:PhoneTextBox ID="tbMainPhone" runat="server" CssClass="smallText" ShowExtension="false" Width="100px" Required="false" /><asp:CheckBox ID="cbMainPhoneUnlisted" runat="server" CssClass="smallText" Text="(unlisted)" Checked="false" /></td></tr></table></td>
@@ -371,6 +403,7 @@ function hdc_checkSearchSubmit(e)
         <tr>
             <td colspan="2" style="background-color: #f0f0ff; padding: 4px; border-left: solid 2px gray; border-right: solid 2px gray; border-bottom: solid 2px gray;">
                 <table cellpadding="0" cellspacing="0" align="center" border="0" style="width: 100%; margin-bottom: 15px;">
+                    <asp:PlaceHolder ID="phFamilyFriendSaveMessage" runat="server"></asp:PlaceHolder>
                     <tr>
                         <td align="left" valign="bottom" class="smallText" style="font-weight: bold">Title</td>
                         <td align="left" valign="bottom" class="smallText" style="font-weight: bold">First Name</td>

@@ -512,6 +512,22 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             // Sync the family.
             //
             f.SyncFamily();
+
+            //
+            // Show some text and set it to auto-fade after 5 seconds.
+            //
+            Label message = new Label();
+            HtmlTableRow row = new HtmlTableRow();
+            HtmlTableCell cell = new HtmlTableCell();
+            phFamilySaveMessage.Controls.Add(row);
+            row.Cells.Add(cell);
+            cell.ColSpan = 2;
+            cell.Align = "center";
+            cell.Controls.Add(message);
+            message.Text = "Changes to the " + f.FamilyName + " family have been saved.<br />&nbsp;";
+            message.ID = "lbFamilySaveMessage";
+            message.Style.Add("filter", "alpha(opacity=100)");
+            Page.ClientScript.RegisterStartupScript(typeof(Page), "hdc_hideFamilySaveMessage", "<script>setTimeout('hdc_fadeObjectOut(\\'" + message.ClientID + "\\')', 8000);</script>");
         }
 
         void btnSaveFriend_Click(object sender, EventArgs e)
@@ -680,6 +696,34 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 // Sync the family.
                 //
                 f.SyncFamily();
+
+                //
+                // Clear out the values.
+                //
+                BuildFamilyFriend(true);
+                tbFriendAddressLine1.Text = "";
+                tbFriendAddressLine2.Text = "";
+                tbFriendAddressCity.Text = "";
+                tbFriendAddressState.Text = "";
+                tbFriendAddressPostalCode.Text = "";
+                if (CountryCodeSetting != null && CountryCodeSetting != "")
+                    ddlFriendAddressCountry.SelectedValue = CountryCodeSetting;
+
+                //
+                // Show some text and set it to auto-fade after 5 seconds.
+                //
+                Label message = new Label();
+                HtmlTableRow row = new HtmlTableRow();
+                HtmlTableCell cell = new HtmlTableCell();
+                phFamilyFriendSaveMessage.Controls.Add(row);
+                row.Cells.Add(cell);
+                cell.ColSpan = 8;
+                cell.Align = "center";
+                cell.Controls.Add(message);
+                message.Text = fm.FirstName + " " + fm.LastName + " has been made a friend of the " + f.FamilyName + " family.<br />&nbsp;";
+                message.ID = "lbFamilyFriendSaveMessage";
+                message.Style.Add("filter", "alpha(opacity=100)");
+                Page.ClientScript.RegisterStartupScript(typeof(Page), "hdc_hideFamilyFriendSaveMessage", "<script>showFamilyFriend(); setTimeout('hdc_fadeObjectOut(\\'" + message.ClientID + "\\')', 8000);</script>");
             }
         }
 
@@ -818,34 +862,35 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     //
                     // Alternate row background colors.
                     //
+                    phSearchResults.Controls.Add(row);
                     row.Attributes.Add("class", ((phSearchResults.Controls.Count % 2) != 0 ? "listItem" : "listAltItem"));
 
                     //
                     // Add in the link button to select this person.
                     //
                     cell = new HtmlTableCell();
+                    row.Cells.Add(cell);
                     link = new LinkButton();
+                    cell.Controls.Add(link);
                     link.ID = "btnPerson" + p.PersonID;
                     link.Text = p.LastName + ", " + p.FirstName;
                     link.Click += new EventHandler(btnSelectPerson_Click);
-                    cell.Controls.Add(link);
-                    row.Cells.Add(cell);
 
                     //
                     // Add in the gender.
                     //
                     if (PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.View))
-                        row.Cells.Add(TableCellString(null, p.Gender.ToString()));
+                        TableCellString(row, null, p.Gender.ToString());
                     else
-                        row.Cells.Add(TableCellString(null, ""));
+                        TableCellString(row, null, "");
 
                     //
                     // Add in the age.
                     //
                     if (PersonFieldOperationAllowed(PersonFields.Profile_Age, OperationType.View))
-                        row.Cells.Add(TableCellString(null, (p.Age != -1 ? p.Age.ToString() : "")));
+                        TableCellString(row, null, (p.Age != -1 ? p.Age.ToString() : ""));
                     else
-                        row.Cells.Add(TableCellString(null, ""));
+                        TableCellString(row, null, "");
 
                     //
                     // Add in the grade.
@@ -853,10 +898,10 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     if (PersonFieldOperationAllowed(PersonFields.Profile_Grade, OperationType.View))
                     {
                         grade = Person.GetGradeName(Person.CalculateGradeLevel(p.GraduationDate, CurrentOrganization.GradePromotionDate));
-                        row.Cells.Add(TableCellString(null, grade));
+                        TableCellString(row, null, grade);
                     }
                     else
-                        row.Cells.Add(TableCellString(null, ""));
+                        TableCellString(row, null, "");
 
                     //
                     // Add in the Main/Home phone number.
@@ -867,25 +912,23 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                         if (phone != null && phone.Number != "")
                         {
                             if (phone.Unlisted)
-                                row.Cells.Add(TableCellString(null, phone.Number + " (unlisted)"));
+                                TableCellString(row, null, phone.Number + " (unlisted)");
                             else
-                                row.Cells.Add(TableCellString(null, phone.Number));
+                                TableCellString(row, null, phone.Number);
                         }
                         else
-                            row.Cells.Add(TableCellString(null, ""));
+                            TableCellString(row, null, "");
                     }
                     else
-                        row.Cells.Add(TableCellString(null, ""));
+                        TableCellString(row, null, "");
 
                     //
                     // Add in the e-mail address.
                     //
                     if (PersonFieldOperationAllowed(PersonFields.Profile_Emails, OperationType.View))
-                        row.Cells.Add(TableCellString(null, p.Emails.FirstActive));
+                        TableCellString(row, null, p.Emails.FirstActive);
                     else
-                        row.Cells.Add(TableCellString(null, ""));
-
-                    phSearchResults.Controls.Add(row);
+                        TableCellString(row, null, "");
                 }
             }
 
@@ -986,7 +1029,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             // Add in a hidden cell for the person ID.
             //
-            row.Cells.Add(TableCellString("textMemberID_" + index.ToString(), (fm != null ? fm.PersonID.ToString() : "-1")));
+            TableCellString(row, "textMemberID_" + index.ToString(), (fm != null ? fm.PersonID.ToString() : "-1"));
             ((Label)row.Cells[row.Cells.Count - 1].Controls[0]).Style.Add("display", "none");
 
             //
@@ -994,11 +1037,11 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             allowed = PersonFieldOperationAllowed(PersonFields.Profile_Name, OperationType.View);
             value = (SetValues ? (allowed && fm != null ? fm.Title.LookupID.ToString() : "") : null);
-            row.Cells.Add(TableCellLookupDropDownList("ddlMemberTitle_" + index.ToString(), new Guid("3394ca53-5791-42c8-b996-1d77c740cf03"), value, false));
+            TableCellLookupDropDownList(row, "ddlMemberTitle_" + index.ToString(), new Guid("3394ca53-5791-42c8-b996-1d77c740cf03"), value, false);
             value = (SetValues ? (allowed && fm != null ? fm.FirstName : "") : null);
-            row.Cells.Add(TableCellTextBox("tbMemberFirstName_" + index.ToString(), value, 65));
+            TableCellTextBox(row, "tbMemberFirstName_" + index.ToString(), value, 65);
             value = (SetValues ? (allowed ? (fm != null ? fm.LastName : tbFamilyName.Text) : "") : null);
-            row.Cells.Add(TableCellTextBox("tbMemberLastName_" + index.ToString(), value, 90));
+            TableCellTextBox(row, "tbMemberLastName_" + index.ToString(), value, 90);
             if (PersonFieldOperationAllowed(PersonFields.Profile_Name, OperationType.Edit) == false)
             {
                 ((DropDownList)row.Cells[row.Cells.Count - 3].Controls[0]).Enabled = false;
@@ -1011,7 +1054,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             allowed = PersonFieldOperationAllowed(PersonFields.Profile_Family_Information, OperationType.View);
             value = (SetValues ? (allowed ? luFamilyRole.LookupID.ToString() : "") : null);
-            row.Cells.Add(TableCellLookupDropDownList("ddlMemberFamilyRole_" + index.ToString(), new Guid("d3ce5e62-4ef2-4ff8-a80d-5492bf995459"), value, true));
+            TableCellLookupDropDownList(row, "ddlMemberFamilyRole_" + index.ToString(), new Guid("d3ce5e62-4ef2-4ff8-a80d-5492bf995459"), value, true);
             list = (DropDownList)row.Cells[row.Cells.Count - 1].Controls[0];
             list.Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.Edit);
             list.Attributes["onchange"] = "hdc_toggleFamilyAttributes();";
@@ -1021,7 +1064,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             allowed = PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.View);
             value = (SetValues ? (allowed ? (fm != null ? ((int)fm.Gender).ToString() : Enum.Format(typeof(Arena.Enums.Gender), Arena.Enums.Gender.Unknown, "d")) : "") : null);
-            row.Cells.Add(TableCellEnumDropDownList("ddlMemberGender_" + index.ToString(), typeof(Arena.Enums.Gender), value));
+            TableCellEnumDropDownList(row, "ddlMemberGender_" + index.ToString(), typeof(Arena.Enums.Gender), value);
             ((DropDownList)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.Edit);
 
             //
@@ -1029,7 +1072,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             allowed = PersonFieldOperationAllowed(PersonFields.Profile_BirthDate, OperationType.View);
             value = (SetValues ? (allowed && fm != null ? (fm.BirthDate.Year > 1901 ? fm.BirthDate.ToString("MM/dd/yyyy") : "") : "") : null);
-            row.Cells.Add(TableCellDateTextBox("dtbMemberBirthDate_" + index.ToString(), value));
+            TableCellDateTextBox(row, "dtbMemberBirthDate_" + index.ToString(), value);
             ((DateTextBox)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.Edit);
 
             //
@@ -1037,6 +1080,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             allowed = PersonFieldOperationAllowed(PersonFields.Profile_Grade, OperationType.View);
             cell = new HtmlTableCell();
+            row.Cells.Add(cell);
             list = new DropDownList();
             cell.Controls.Add(list);
             PopulateGrades(list);
@@ -1045,14 +1089,13 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             if (SetValues)
                 list.SelectedValue = (allowed && fm != null ? Person.CalculateGradeLevel(fm.GraduationDate, CurrentOrganization.GradePromotionDate).ToString() : "");
             list.Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Grade, OperationType.Edit);
-            row.Cells.Add(cell);
 
             //
             // Add in the marital status.
             //
             allowed = PersonFieldOperationAllowed(PersonFields.Profile_Marital_Status, OperationType.View);
             value = (SetValues ? (allowed && fm != null ? fm.MaritalStatus.LookupID.ToString() : "") : null);
-            row.Cells.Add(TableCellLookupDropDownList("ddlMemberMaritalStatus_" + index.ToString(), new Guid("0aad26c7-ad9d-4fe8-96b1-c9bcd033bb5b"), value, true));
+            TableCellLookupDropDownList(row, "ddlMemberMaritalStatus_" + index.ToString(), new Guid("0aad26c7-ad9d-4fe8-96b1-c9bcd033bb5b"), value, true);
             ((DropDownList)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Marital_Status, OperationType.Edit);
 
             //
@@ -1060,7 +1103,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             allowed = PersonFieldOperationAllowed(PersonFields.Profile_Anniversary_Date, OperationType.View);
             value = (SetValues ? (allowed && fm != null ? (fm.AnniversaryDate.Year > 1901 ? fm.AnniversaryDate.ToString("MM/dd/yyyy") : "") : "") : null);
-            row.Cells.Add(TableCellDateTextBox("dtbMemberAnniversaryDate_" + index.ToString(), value));
+            TableCellDateTextBox(row, "dtbMemberAnniversaryDate_" + index.ToString(), value);
             ((DateTextBox)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Anniversary_Date, OperationType.Edit);
 
             //
@@ -1068,7 +1111,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             allowed = PersonFieldOperationAllowed(PersonFields.Profile_Emails, OperationType.View);
             value = (SetValues ? (allowed && fm != null ? (fm.Emails.FirstActive != null ? fm.Emails.FirstActive : "") : "") : null);
-            row.Cells.Add(TableCellTextBox("tbMemberEmail_" + index.ToString(), value, 150));
+            TableCellTextBox(row, "tbMemberEmail_" + index.ToString(), value, 150);
             ((TextBox)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Emails, OperationType.Edit);
 
             //
@@ -1076,37 +1119,37 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             // the visibility of the extra fields. If you change the image file
             // here you must also update the javascript code.
             //
+            cell = new HtmlTableCell();
+            row.Cells.Add(cell);
             Image img = new Image();
+            cell.Controls.Add(img);
             img.ImageUrl = BaseUrl() + "Images/information2.gif";
             img.ID = "imgMemberShowExtra_" + index.ToString();
             img.Attributes.Add("onclick", "hdc_toggleExtraFields(this);");
-            cell = new HtmlTableCell();
-            cell.Controls.Add(img);
-            row.Cells.Add(cell);
 
             //
             // Add another row for the extra information that will appear
             // and disappear depending on first-row selections.
             //
-            cell = TableCellString(null, "");
-            cell.ColSpan = (row.Cells.Count - 2);
+            int colspan = (row.Cells.Count - 2);
             row = new HtmlTableRow();
-            row.Cells.Add(TableCellString(null, ""));
+            phFamilyMembers.Controls.Add(row);
+            TableCellString(row, null, "");
             row.Cells[row.Cells.Count - 1].ColSpan = 2;
             row.ID = "trMemberExtraFields_" + index.ToString();
-            row.Cells.Add(cell);
+            cell = TableCellString(row, null, "");
+            cell.ColSpan = colspan;
 
             //
             // Add in all the person attributes.
             //
             if (PersonAttributeIDsSetting != "")
-                cell.Controls.Add(BuildPersonAttributes(index, fm, SetValues));
+                BuildPersonAttributes(cell, index, fm, SetValues);
 
             //
             // Default the row not displayed.
             //
             row.Style.Add("display", "none");
-            phFamilyMembers.Controls.Add(row);
         }
 
         private void BuildFamilyFriend(bool SetValues)
@@ -1129,9 +1172,9 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             // Build up the name information for the person.
             //
-            row.Cells.Add(TableCellLookupDropDownList("ddlFriendTitle", new Guid("3394ca53-5791-42c8-b996-1d77c740cf03"), (SetValues ? "" : null), false));
-            row.Cells.Add(TableCellTextBox("tbFriendFirstName", (SetValues ? "" : null), 65));
-            row.Cells.Add(TableCellTextBox("tbFriendLastName", (SetValues ? "" : null), 90));
+            TableCellLookupDropDownList(row, "ddlFriendTitle", new Guid("3394ca53-5791-42c8-b996-1d77c740cf03"), (SetValues ? "" : null), false);
+            TableCellTextBox(row, "tbFriendFirstName", (SetValues ? "" : null), 65);
+            TableCellTextBox(row, "tbFriendLastName", (SetValues ? "" : null), 90);
             if (PersonFieldOperationAllowed(PersonFields.Profile_Name, OperationType.Edit) == false)
             {
                 ((DropDownList)row.Cells[row.Cells.Count - 3].Controls[0]).Enabled = false;
@@ -1143,19 +1186,20 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             // Add in the gender.
             //
             value = (SetValues ? Enum.Format(typeof(Arena.Enums.Gender), Arena.Enums.Gender.Unknown, "d") : null);
-            row.Cells.Add(TableCellEnumDropDownList("ddlFriendGender", typeof(Arena.Enums.Gender), value));
+            TableCellEnumDropDownList(row, "ddlFriendGender", typeof(Arena.Enums.Gender), value);
             ((DropDownList)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.Edit);
 
             //
             // Add in the birth date.
             //
-            row.Cells.Add(TableCellDateTextBox("dtbFriendBirthDate", (SetValues ? "" : null)));
+            TableCellDateTextBox(row, "dtbFriendBirthDate", (SetValues ? "" : null));
             ((DateTextBox)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Gender, OperationType.Edit);
 
             //
             // Add in the grade, a bit custom.
             //
             cell = new HtmlTableCell();
+            row.Cells.Add(cell);
             list = new DropDownList();
             cell.Controls.Add(list);
             PopulateGrades(list);
@@ -1164,68 +1208,67 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             if (SetValues)
                 list.SelectedValue = "";
             list.Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Grade, OperationType.Edit);
-            row.Cells.Add(cell);
 
             //
             // Add in the e-mail address.
             //
-            row.Cells.Add(TableCellTextBox("tbFriendEmail", (SetValues ? "" : null), 150));
+            TableCellTextBox(row, "tbFriendEmail", (SetValues ? "" : null), 150);
             ((TextBox)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Emails, OperationType.Edit);
             
             //
             // Add in the phone number. Also a custom jobby.
             //
             cell = new HtmlTableCell();
+            row.Cells.Add(cell);
             PhoneTextBox ptb = new PhoneTextBox();
+            cell.Controls.Add(ptb);
             ptb.ID = "ptbFriendPhone";
             ptb.CssClass = "smallText";
             ptb.ShowExtension = false;
             ptb.Width = Unit.Pixel(100);
             ptb.Required = false;
-            cell.Controls.Add(ptb);
             CheckBox cb = new CheckBox();
+            cell.Controls.Add(cb);
             cb.ID = "cbFriendPhoneUnlisted";
             cb.CssClass = "smallText";
             cb.Text = "(unlisted)";
             cb.Checked = false;
-            cell.Controls.Add(cb);
-            row.Cells.Add(cell);
 
             //
             // Add in an image with a javascript click handler that will toggle
             // the visibility of the extra fields. If you change the image file
             // here you must also update the javascript code.
             //
+            cell = new HtmlTableCell();
+            row.Cells.Add(cell);
             Image img = new Image();
+            cell.Controls.Add(img);
             img.ImageUrl = BaseUrl() + "Images/information2.gif";
             img.ID = "imgFriendShowExtra";
             img.Attributes.Add("onclick", "hdc_toggleExtraFields(this);");
-            cell = new HtmlTableCell();
-            cell.Controls.Add(img);
-            row.Cells.Add(cell);
 
             //
             // Add another row for the extra information that will appear
             // and disappear depending on first-row selections.
             //
-            cell = TableCellString(null, "");
-            cell.ColSpan = (row.Cells.Count - 2);
+            int colspan = (row.Cells.Count - 2);
             row = new HtmlTableRow();
-            row.Cells.Add(TableCellString(null, ""));
+            phFamilyFriend.Controls.Add(row);
+            TableCellString(row, null, "");
             row.ID = "trFriendExtraFields";
-            row.Cells.Add(cell);
+            cell = TableCellString(row, null, "");
+            cell.ColSpan = colspan;
 
             //
             // Add in all the person attributes.
             //
             if (PersonAttributeIDsSetting != "")
-                cell.Controls.Add(BuildPersonAttributes(9999, null, SetValues));
+                BuildPersonAttributes(cell, 9999, null, SetValues);
 
             //
             // Default the row not displayed.
             //
             row.Style.Add("display", "none");
-            phFamilyFriend.Controls.Add(row);
         }
 
         /// <summary>
@@ -1234,37 +1277,43 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         /// </summary>
         /// <param name="value">The string to display inside the cell.</param>
         /// <returns>A new TableCell containing the given string.</returns>
-        private HtmlTableCell TableCellString(string controlId, string value)
+        private HtmlTableCell TableCellString(HtmlTableRow row, string controlId, string value)
         {
             Label label;
             HtmlTableCell cell = new HtmlTableCell();
 
 
+            row.Cells.Add(cell);
             label = new Label();
+            cell.Controls.Add(label);
+
             label.CssClass = "smallText";
             label.Text = value;
             if (controlId != null)
                 label.ID = controlId;
-            cell.Controls.Add(label);
 
             return cell;
         }
 
-        private HtmlTableCell TableCellLookupDropDownList(string controlId, Guid guid, string value, bool required)
+        private HtmlTableCell TableCellLookupDropDownList(HtmlTableRow row, string controlId, Guid guid, string value, bool required)
         {
-            return TableCellLookupDropDownList(controlId, new LookupCollection(guid), value, required);
+            return TableCellLookupDropDownList(row, controlId, new LookupCollection(guid), value, required);
         }
 
-        private HtmlTableCell TableCellLookupDropDownList(string controlId, int typeId, string value, bool required)
+        private HtmlTableCell TableCellLookupDropDownList(HtmlTableRow row, string controlId, int typeId, string value, bool required)
         {
-            return TableCellLookupDropDownList(controlId, new LookupCollection(typeId), value, required);
+            return TableCellLookupDropDownList(row, controlId, new LookupCollection(typeId), value, required);
         }
 
-        private HtmlTableCell TableCellLookupDropDownList(string controlId, LookupCollection lookups, string value, bool required)
+        private HtmlTableCell TableCellLookupDropDownList(HtmlTableRow row, string controlId, LookupCollection lookups, string value, bool required)
         {
             HtmlTableCell cell = new HtmlTableCell();
             DropDownList list = new DropDownList();
 
+            row.Cells.Add(cell);
+            cell.Controls.Add(list);
+
+            list.Items.Clear();
             if (required == false)
                 list.Items.Add(new ListItem("", "-1"));
             lookups.LoadDropDownList(list);
@@ -1274,12 +1323,10 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             if (value != null)
                 list.SelectedValue = value;
 
-            cell.Controls.Add(list);
-
             return cell;
         }
 
-        private HtmlTableCell TableCellEnumDropDownList(string controlId, Type eType, string value)
+        private HtmlTableCell TableCellEnumDropDownList(HtmlTableRow row, string controlId, Type eType, string value)
         {
             HtmlTableCell cell = new HtmlTableCell();
             DropDownList list = new DropDownList();
@@ -1287,6 +1334,10 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             string eValue;
             int i;
 
+            row.Cells.Add(cell);
+            cell.Controls.Add(list);
+
+            list.Items.Clear();
             for (i = 0; i < names.Length; i++)
             {
                 eValue = Enum.Format(eType, Enum.Parse(eType, names[i]), "d");
@@ -1300,16 +1351,15 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             if (value != null)
                 list.SelectedValue = value;
 
-            cell.Controls.Add(list);
-
             return cell;
         }
 
-        private HtmlTableCell TableCellTextBox(string controlId, string value, int width)
+        private HtmlTableCell TableCellTextBox(HtmlTableRow row, string controlId, string value, int width)
         {
             HtmlTableCell cell = new HtmlTableCell();
             TextBox tb = new TextBox();
 
+            row.Cells.Add(cell);
             cell.Controls.Add(tb);
 
             tb.CssClass = "smallText";
@@ -1323,11 +1373,14 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             return cell;
         }
 
-        private HtmlTableCell TableCellDateTextBox(string controlId, string value)
+        private HtmlTableCell TableCellDateTextBox(HtmlTableRow row, string controlId, string value)
         {
             HtmlTableCell cell = new HtmlTableCell();
             DateTextBox dtb = new DateTextBox();
 
+
+            row.Cells.Add(cell);
+            cell.Controls.Add(dtb);
 
             dtb.CssClass = "smallText";
             dtb.Width = Unit.Pixel(65);
@@ -1337,13 +1390,12 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             if (value != null)
                 dtb.Text = value;
 
-            cell.Controls.Add(dtb);
-
             return cell;
         }
 
         private void PopulateGrades(DropDownList list)
         {
+            list.Items.Clear();
             list.Items.Add(new ListItem("", "-1"));
             list.Items.Add(new ListItem("Kinder", "0"));
             list.Items.Add(new ListItem("1st", "1"));
@@ -1423,7 +1475,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 return true;
         }
 
-        private HtmlTable BuildPersonAttributes(int index, Person p, bool SetValues)
+        private HtmlTable BuildPersonAttributes(Control parent, int index, Person p, bool SetValues)
         {
             HtmlTable table = new HtmlTable();
             string[] attributeIDs = PersonAttributeIDsSetting.Split(new char[] { ',' });
@@ -1432,19 +1484,23 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             // Loop through and add each person attribute.
             //
+            parent.Controls.Add(table);
             for (i = 0; i < attributeIDs.Length; i++)
             {
-                table.Rows.Add(BuildPersonAttribute(index, p, Convert.ToInt32(attributeIDs[i]), SetValues));
+                BuildPersonAttribute(table, index, p, Convert.ToInt32(attributeIDs[i]), SetValues);
             }
 
             return table;
         }
 
-        private HtmlTableRow BuildPersonAttribute(int index, Person p, int attributeID, bool SetValue)
+        private HtmlTableRow BuildPersonAttribute(HtmlTable parent, int index, Person p, int attributeID, bool SetValue)
         {
             PersonAttributeEditor attribute;
             HtmlTableRow row = new HtmlTableRow();
 
+
+            if (parent != null)
+                parent.Rows.Add(row);
 
             //
             // Create the attribute to work with.
@@ -1457,14 +1513,14 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             // Create the attribute title.
             //
-            row.Cells.Add(TableCellString(null, attribute.AttributeName));
+            TableCellString(row, null, attribute.AttributeName);
 
             //
             // Create the data entry portion.
             //
             HtmlTableCell cell = new HtmlTableCell();
             row.Cells.Add(cell);
-            cell.Controls.Add(attribute.WebControl("MemberAttribute_" + index.ToString(), SetValue));
+            attribute.WebControl(cell, "MemberAttribute_" + index.ToString(), SetValue);
 
             return row;
         }
@@ -1519,7 +1575,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         {
         }
 
-        public WebControl WebControl(string baseControlId, bool SetValue)
+        public Control WebControl(Control parent, string baseControlId, bool SetValue)
         {
             switch (this.AttributeType)
             {
@@ -1530,6 +1586,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     {
                         TextBox tb = new TextBox();
 
+                        parent.Controls.Add(tb);
                         tb.CssClass = "smallText";
                         tb.ID = baseControlId + "_" + this.AttributeId.ToString();
                         if (SetValue)
@@ -1548,6 +1605,8 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                         LookupCollection lookups;
                         DropDownList list = new DropDownList();
 
+                        parent.Controls.Add(list);
+                        list.Items.Clear();
                         list.CssClass = "smallText";
                         list.ID = baseControlId + "_" + this.AttributeId.ToString();
                         list.Enabled = !this.Readonly;
@@ -1571,6 +1630,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     {
                         DateTextBox dtb = new DateTextBox();
 
+                        parent.Controls.Add(dtb);
                         dtb.CssClass = "smallText";
                         dtb.Width = Unit.Pixel(65);
                         dtb.Enabled = !this.Readonly;
@@ -1590,6 +1650,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     {
                         CheckBox cb = new CheckBox();
 
+                        parent.Controls.Add(cb);
                         cb.ID = baseControlId + "_" + this.AttributeId.ToString();
                         cb.CssClass = "smallText";
                         cb.Checked = (this.IntValue == 1);
@@ -1600,8 +1661,9 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
                 default:
                     {
-                        Label label;
-                        label = new Label();
+                        Label label = new Label();
+
+                        parent.Controls.Add(label);
                         label.CssClass = "smallText";
                         label.Text = "Unable to process datatype " + this.AttributeType.ToString();
 

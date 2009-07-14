@@ -76,7 +76,9 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         [BooleanSetting("Field Security", "Enable field level security for this module. This setting behaves the same as the PersonDetails module.", true, false)]
         public bool FieldSecuritySetting { get { return Convert.ToBoolean(Setting("FieldSecurity", "false", true)); } }
 
-        [NumericSetting("Friend Relationship ID", "The relationship ID to be used when adding a family friend. The relationship is added from the friend to the head of family.", false)]
+        [ListFromSqlSetting("Friend Relationship", "The relationship ID to be used when adding a family friend. The relationship is added from the friend to the head of family.", false, "",
+            "SELECT [relationship_type_id], [relationship] FROM [core_relationship_type] ORDER BY [relationship_order]",
+            ListSelectionMode.Single)]
         public int FriendRelationshipIDSetting { get { return Convert.ToInt32(Setting("FriendRelationshipID", "-1", false)); } }
 
         #endregion
@@ -467,7 +469,11 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     pa.Address.PostalCode = tbAddressPostalCode.Text.Trim();
                     pa.Address.Country = ddlAddressCountry.SelectedValue;
                     pa.Address.Standardize();
-                    pa.Address.Geocode(CurrentUser.Identity.Name);
+                    //
+                    // Do not geocode. It takes too long and sometimes completely
+                    // times out.
+                    //
+                    //pa.Address.Geocode(CurrentUser.Identity.Name);
                 }
 
                 //
@@ -528,6 +534,9 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             message.ID = "lbFamilySaveMessage";
             message.Style.Add("filter", "alpha(opacity=100)");
             Page.ClientScript.RegisterStartupScript(typeof(Page), "hdc_hideFamilySaveMessage", "<script>setTimeout('hdc_fadeObjectOut(\\'" + message.ClientID + "\\')', 8000);</script>");
+
+            hfFamily.Value = f.FamilyID.ToString();
+            Build_Page(true);
         }
 
         void btnSaveFriend_Click(object sender, EventArgs e)
@@ -652,7 +661,12 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     pa.Address.PostalCode = tbFriendAddressPostalCode.Text.Trim();
                     pa.Address.Country = ddlFriendAddressCountry.SelectedValue;
                     pa.Address.Standardize();
-                    pa.Address.Geocode(CurrentUser.Identity.Name);
+
+                    //
+                    // Do not geocode. It takes too long and sometimes will flat
+                    // out timeout.
+                    //
+                    //pa.Address.Geocode(CurrentUser.Identity.Name);
                 }
 
                 //
@@ -720,7 +734,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 cell.ColSpan = 8;
                 cell.Align = "center";
                 cell.Controls.Add(message);
-                message.Text = fm.FirstName + " " + fm.LastName + " has been made a friend of the " + f.FamilyName + " family.<br />&nbsp;";
+                message.Text = fm.FirstName + " " + fm.LastName + " has been made a friend of the " + tbFamilyName.Text + " family.<br />&nbsp;";
                 message.ID = "lbFamilyFriendSaveMessage";
                 message.Style.Add("filter", "alpha(opacity=100)");
                 Page.ClientScript.RegisterStartupScript(typeof(Page), "hdc_hideFamilyFriendSaveMessage", "<script>showFamilyFriend(); setTimeout('hdc_fadeObjectOut(\\'" + message.ClientID + "\\')', 8000);</script>");

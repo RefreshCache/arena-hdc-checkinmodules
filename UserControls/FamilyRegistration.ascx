@@ -243,6 +243,38 @@ function hdc_fadeObjectOut(element)
     }
 }
 
+//
+// Swap out the clickable save button for the saving... progress element.
+//
+function hdc_SaveProgress(element)
+{
+    var o = hdc_getElementById(element);
+    var s = hdc_getElementById(element + 'Clicked');
+
+    if (o && s)
+    {
+        o.style.display = 'none';
+        s.style.display = '';
+    }
+}
+
+//
+// Propagate the family name to all blank last names.
+//
+function hdc_propagateFamilyName()
+{
+    var o, i, familyName = hdc_getElementById('tbFamilyName').value;
+
+    for (i = 0; ; i++)
+    {
+        o = hdc_getElementById('tbMemberLastName_' + i);
+        if (!o)
+            break;
+
+        if (o.value == '')
+            o.value = familyName;
+    }
+}
 </script>
 
 <asp:Panel id="pnlFindFamily" runat="server" Visible="false" Width="100%">
@@ -337,7 +369,7 @@ function hdc_fadeObjectOut(element)
                 <table cellpadding="0" cellspacing="2" align="center" border="0" width="100%" style="padding-top: 10px;">
                     <asp:PlaceHolder ID="phFamilySaveMessage" runat="server"></asp:PlaceHolder>
                     <tr>
-                        <td align="left" class="smallText" style="font-weight: bold; width: 50%;">Family Name:&nbsp;<asp:TextBox ID="tbFamilyName" runat="server" CssClass="smallText" MaxLength="100" Width="150px" TabIndex="0"></asp:TextBox></td>
+                        <td align="left" class="smallText" style="font-weight: bold; width: 50%;">Family Name:&nbsp;<asp:TextBox ID="tbFamilyName" runat="server" CssClass="smallText" MaxLength="100" Width="150px" TabIndex="0" onchange="hdc_propagateFamilyName();"></asp:TextBox></td>
                         <td align="left" class="smallText" width: 50%;"><table border="0" cellpadding="0" cellspacing="0"><tr><td align="center"><span style="font-weight: bold;">Main/Home Phone:&nbsp;<br /></span>(Applies to all)</td><td><Arena:PhoneTextBox ID="tbMainPhone" runat="server" CssClass="smallText" ShowExtension="false" Width="100px" Required="false" /><asp:CheckBox ID="cbMainPhoneUnlisted" runat="server" CssClass="smallText" Text="(unlisted)" Checked="false" /></td></tr></table></td>
                     </tr>
                 </table>
@@ -385,7 +417,7 @@ function hdc_fadeObjectOut(element)
                     <tr>
                         <td align="left" width="100px"><asp:LinkButton ID="btnAddMore" runat="server" CssClass="smallText" Text="Add More"></asp:LinkButton></td>
                         <td align="left" width="100px"><a href="#" id="linkShowFriend" class="smallText" onclick="showFamilyFriend(); return false;" style="display: none;">Add Friend</a></td>
-                        <td align="right"><asp:LinkButton ID="btnSaveFamily" runat="server" CssClass="smallText" Text="Save Family"></asp:LinkButton></td>
+                        <td align="right"><span id="btnSaveFamilyClicked" class="smallText" style="display: none;">Saving...</span><asp:LinkButton ID="btnSaveFamily" runat="server" CssClass="smallText" Text="Save Family" OnClientClick="hdc_SaveProgress('btnSaveFamily');"></asp:LinkButton></td>
                     </tr>
                 </table>
             </td>
@@ -442,7 +474,7 @@ function hdc_fadeObjectOut(element)
                 <table border="0" cellpadding="0" cellspacing="0" width="100%">
                     <tr>
                         <td align="left"><a href="#" class="smallText" onclick="hideFamilyFriend(); return false;">Cancel</a></td>
-                        <td align="right"><asp:LinkButton ID="btnSaveFriend" runat="server" CssClass="smallText" Text="Save Friend"></asp:LinkButton></td>
+                        <td align="right"><span id="btnSaveFriendClicked" class="smallText" style="display: none;">Saving...</span><asp:LinkButton ID="btnSaveFriend" runat="server" CssClass="smallText" Text="Save Friend" OnClientClick="hdc_SaveProgress('btnSaveFriend');"></asp:LinkButton></td>
                     </tr>
                 </table>
             </td>

@@ -76,7 +76,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         [BooleanSetting("Field Security", "Enable field level security for this module. This setting behaves the same as the PersonDetails module.", true, false)]
         public bool FieldSecuritySetting { get { return Convert.ToBoolean(Setting("FieldSecurity", "false", true)); } }
 
-        [ListFromSqlSetting("Friend Relationship", "The relationship ID to be used when adding a family friend. The relationship is added from the friend to the head of family.", false, "",
+        [ListFromSqlSetting("Friend Relationship", "The relationship to be used when adding a family friend. The friend is created as their own family and the selected relationship is applied to the friend.", false, "",
             "SELECT [relationship_type_id], [relationship] FROM [core_relationship_type] ORDER BY [relationship_order]",
             ListSelectionMode.Single)]
         public int FriendRelationshipIDSetting { get { return Convert.ToInt32(Setting("FriendRelationshipID", "-1", false)); } }
@@ -126,6 +126,13 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             }
 
             Build_Page(!IsPostBack);
+
+            //
+            // If searching is not allowed and this is the first load, force
+            // a new family.
+            //
+            if (!IsPostBack && AllowSearchSetting == false)
+                btnNewFamily_Click(null, null);
         }
 
         /// <summary>

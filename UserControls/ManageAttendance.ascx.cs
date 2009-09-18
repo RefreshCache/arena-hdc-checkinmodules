@@ -37,10 +37,20 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
 	public partial class ManageAttendance : PortalControl
 	{
+        const int kAttendanceAbilityLevelColumn = 5;
+
+        #region Module Settings
+
         [PageSettingAttribute("Person Detail Page", "Page to use for viewing a person's detail information.", false)]
         public int PersonDetailPageID { get { return Convert.ToInt32(Setting("PersonDetailPageID", "-1", false)); } }
 
-		#region Event Handlers
+        [ListFromSqlSetting("Ability Level Attribute", "Sets ability level person attribute.", false, "",
+            "SELECT [attribute_id], [attribute_name] FROM [core_attribute] WHERE [attribute_type] = 3 AND [attribute_group_id] = 16 ORDER BY [attribute_name]")]
+        public string AbilityLevelAttributeIDSetting { get { return Setting("AbilityLevelAttributeID", "", false); } }
+
+        #endregion
+
+        #region Event Handlers
 
         protected void Page_Init(object sender, EventArgs e)
         {
@@ -66,6 +76,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 dgAttendance.MailEnabled = false;
                 dgAttendance.ExportEnabled = true;
                 dgAttendance.AllowSorting = true;
+                dgAttendance.Columns[5].Visible = (AbilityLevelAttributeIDSetting != "");
 
                 //
                 // Turn off either the regular name, or the hyperlink name.
@@ -195,13 +206,29 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
         private DataTable GetOccurrenceData()
         {
-            // open the data reader
+            //
+            // Open the data reader
+            //
             StringBuilder command = new StringBuilder("SELECT coa.occurrence_attendance_id,coa.occurrence_id,coa.person_id,coa.security_code,coa.attended,coa.check_in_time,coa.check_out_time" +
                             ",cp.last_name + ', ' + cp.first_name AS 'common_name',cp.first_name,cp.last_name,cp.nick_name,cp.gender,cp.birth_date,cp.graduation_date,cp.guid" +
                             ",co.occurrence_name AS 'common_occurrence_name'" +
                             ",cotg.group_name + ' - ' + cot.type_name AS 'common_attendance_name'" +
-                            ",ol.building_name + ' - ' + ol.location_name AS 'common_location_name',ol.building_name,ol.location_name" +
-                            " FROM core_occurrence_attendance AS coa" +
+                            ",ol.building_name + ' - ' + ol.location_name AS 'common_location_name',ol.building_name,ol.location_name");
+
+            if (AbilityLevelAttributeIDSetting != "")
+            {
+                command.AppendFormat(",(SELECT cl_al.lookup_value" +
+                    "   FROM core_person_attribute AS cpa_al" +
+                    "	LEFT JOIN core_lookup AS cl_al ON cl_al.lookup_id = cpa_al.int_value" +
+                    "   WHERE cpa_al.person_id = cp.person_id AND cpa_al.attribute_id = '{0}') AS 'ability_level'",
+                    AbilityLevelAttributeIDSetting);
+            }
+            else
+            {
+                command.Append(",'' AS 'ability_level'");
+            }
+
+            command.Append(" FROM core_occurrence_attendance AS coa" +
                             " LEFT JOIN core_person AS cp ON cp.person_id = coa.person_id" +
                             " LEFT JOIN core_occurrence AS co ON coa.occurrence_id = co.occurrence_id" +
                             " LEFT JOIN core_occurrence_type AS cot ON cot.occurrence_type_id = co.occurrence_type" +
@@ -293,6 +320,9 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             DateTime date = DateTime.Parse(graduationYear.ToString());
             int grade = Person.CalculateGradeLevel(date, CurrentOrganization.GradePromotionDate);
 
+            //
+            // Return the grade name if available.
+            //
             if (grade != -1)
                 return Person.GetGradeName(grade);
 

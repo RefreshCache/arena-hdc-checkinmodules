@@ -53,6 +53,7 @@
                     <asp:Label runat="server" Text='<%# GraduationDateToGradeString(DataBinder.Eval(Container.DataItem, "graduation_date")) %>'></asp:Label>
                 </ItemTemplate>
             </asp:TemplateColumn>
+            <asp:BoundColumn HeaderText="Ability Level" DataField="ability_level" SortExpression="ability_level" Visible="false" HeaderStyle-Wrap="false" HeaderStyle-VerticalAlign="Top"></asp:BoundColumn>
             <asp:BoundColumn HeaderText="Check-in" DataField="check_in_time" SortExpression="check_in_time" Visible="true" HeaderStyle-Wrap="false" HeaderStyle-VerticalAlign="Top"></asp:BoundColumn>
             <asp:BoundColumn HeaderText="Attendance Type" DataField="common_attendance_name" SortExpression="common_attendance_name" Visible="true" HeaderStyle-Wrap="false" HeaderStyle-VerticalAlign="Top"></asp:BoundColumn>
             <asp:BoundColumn HeaderText="Occurrence" DataField="common_occurrence_name" SortExpression="common_occurrence_name" Visible="true" HeaderStyle-Wrap="false" HeaderStyle-VerticalAlign="Top"></asp:BoundColumn>

@@ -28,12 +28,12 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 	using System.Web.UI.WebControls;
 	using System.Web.UI.WebControls.WebParts;
 	using System.Web.UI.HtmlControls;
+    using System.Reflection;
 
 	using Arena.Portal;
 	using Arena.Core;
     using Arena.Organization;
-
-    using Arena.Custom.Cccev.CheckIn;
+    using Arena.Computer;
 
 	public partial class ManageAttendance : PortalControl
 	{
@@ -94,17 +94,24 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 // Fill in the filter options.
                 //
                 OccurrenceTypeGroupCollection otgc = new OccurrenceTypeGroupCollection(CurrentOrganization.OrganizationID);
-                ddlFilterAttendanceTypeGroup.Items.Add(new ListItem("Show All", "-1"));
                 foreach (OccurrenceTypeGroup otg in otgc)
                 {
-                    ddlFilterAttendanceTypeGroup.Items.Add(new ListItem(otg.GroupName, otg.GroupId.ToString()));
+                    ddlFilterTypeGroup.Items.Add(new ListItem(otg.GroupName, otg.GroupId.ToString()));
                 }
-                ddlFilterAttendanceTypeGroup.SelectedIndex = 0;
-                ddlFilterAttendanceTypeGroup_Changed(null, null);
+                OccurrenceCollection oc = new OccurrenceCollection(DateTime.Now, DateTime.Now);
+                if (this.Request.Params["groupID"] != null)
+                {
+                    ddlFilterTypeGroup.SelectedValue = this.Request.Params["groupID"];
+                }
+                else if (oc.Count > 0)
+                {
+                    ddlFilterTypeGroup.SelectedValue = new OccurrenceType(oc[0].OccurrenceTypeID).GroupId.ToString();
+                }
+                else
+                    ddlFilterTypeGroup.SelectedIndex = 0;
 
-                //
-                // Do initial sorting.
-                //
+                ddlFilterTypeGroup_Changed(null, null);
+                btnFilterApply_Click(null, null);
             }
 		}
 
@@ -116,53 +123,156 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
         public void btnFilterApply_Click(object sender, EventArgs e)
         {
-            hfFilterAttendanceTypeGroupID.Value = ddlFilterAttendanceTypeGroup.SelectedValue;
-            hfFilterAttendanceTypeID.Value = ddlFilterAttendanceType.SelectedValue;
+            hfFilterTypeGroupID.Value = ddlFilterTypeGroup.SelectedValue;
+            hfFilterService.Value = ddlFilterService.SelectedValue;
+            hfFilterName.Value = tbFilterName.Text;
+            hfFilterTypeID.Value = ddlFilterType.SelectedValue;
             hfFilterOccurrenceID.Value = ddlFilterOccurrence.SelectedValue;
             hfFilterLocationID.Value = ddlFilterLocation.SelectedValue;
 
             dgAttendance_ReBind(null, null);
         }
 
-        public void ddlFilterAttendanceTypeGroup_Changed(object sender, EventArgs e)
+        public void ddlFilterTypeGroup_Changed(object sender, EventArgs e)
         {
             OccurrenceTypeCollection otc;
-
-            ddlFilterAttendanceType.Items.Clear();
-            ddlFilterAttendanceType.Items.Add(new ListItem("Show All", "-1"));
-            ddlFilterAttendanceType.SelectedIndex = 0;
-            if (ddlFilterAttendanceTypeGroup.SelectedValue != "-1")
-            {
-                otc = new OccurrenceTypeCollection(Convert.ToInt32(ddlFilterAttendanceTypeGroup.SelectedValue));
-
-                foreach (OccurrenceType ot in otc)
-                {
-                    ddlFilterAttendanceType.Items.Add(new ListItem(ot.TypeName, ot.OccurrenceTypeId.ToString()));
-                }
-
-                ddlFilterAttendanceType.Enabled = true;
-            }
-            else
-            {
-                ddlFilterAttendanceType.Enabled = false;
-            }
-
-            ddlFilterAttendanceType_Changed(null, null);
-        }
-
-        public void ddlFilterAttendanceType_Changed(object sender, EventArgs e)
-        {
             OccurrenceCollection oc;
-            LocationCollection lc = new LocationCollection(CurrentOrganization.OrganizationID);
+            DateTime bestDate = DateTime.MinValue, now = DateTime.Now;
+            int matchIndex = 0;
 
 
             //
             // Setup the basic occurrence list.
             //
+            ddlFilterService.Items.Clear();
+
+            //
+            // Add in all valid choices.
+            //
+            if (ddlFilterTypeGroup.SelectedValue != "-1")
+            {
+                otc = new OccurrenceTypeCollection(Convert.ToInt32(ddlFilterTypeGroup.SelectedValue));
+                ArrayList dates = new ArrayList();
+
+                foreach (OccurrenceType ot in otc)
+                {
+                    oc = new OccurrenceCollection(ot.OccurrenceTypeId);
+                    foreach (Occurrence o in oc)
+                    {
+                        if ((o.StartTime <= now && o.EndTime >= now) ||
+                            (o.CheckInStart <= now && o.CheckInEnd >= now))
+                        {
+                            bestDate = o.StartTime;
+                        }
+
+                        if (dates.Contains(o.StartTime) == false)
+                            dates.Add(o.StartTime);
+                    }
+                }
+
+                dates.Sort();
+                dates.Reverse();
+
+                foreach (DateTime dt in dates)
+                {
+                    ddlFilterService.Items.Add(new ListItem(dt.ToString("ddd M/dd/yy h:mm tt"), dt.ToShortDateTimeString()));
+                    if (!IsPostBack && this.Request.Params["service"] != null)
+                    {
+                        if (dt.Equals(DateTime.Parse(this.Request.Params["service"])) == true)
+                            matchIndex = (ddlFilterService.Items.Count - 1);
+                    }
+                    else if (dt.Equals(bestDate) == true)
+                        matchIndex = (ddlFilterService.Items.Count - 1);
+                }
+
+                ddlFilterService.Enabled = true;
+            }
+            else
+            {
+                ddlFilterService.Enabled = false;
+            }
+
+            if (ddlFilterService.Items.Count > 0)
+                ddlFilterService.SelectedIndex = matchIndex;
+
+            //
+            // Build up the Attendance Type drop down list.
+            //
+            if (false)
+            {
+                ddlFilterType.Items.Clear();
+                ddlFilterType.Items.Add(new ListItem("Show All", "-1"));
+                ddlFilterType.SelectedIndex = 0;
+                if (ddlFilterTypeGroup.SelectedValue != "-1")
+                {
+                    otc = new OccurrenceTypeCollection(Convert.ToInt32(ddlFilterTypeGroup.SelectedValue));
+
+                    foreach (OccurrenceType ot in otc)
+                    {
+                        ddlFilterType.Items.Add(new ListItem(ot.TypeName, ot.OccurrenceTypeId.ToString()));
+
+                        if (!IsPostBack && this.Request.Params["typeID"] != null)
+                        {
+                            if (ot.OccurrenceTypeId == Convert.ToInt32(this.Request.Params["typeID"]))
+                            {
+                                ddlFilterType.SelectedIndex = (ddlFilterType.Items.Count - 1);
+                                ddlFilterType_Changed(null, null);
+                            }
+                        }
+                    }
+
+                    ddlFilterType.Enabled = true;
+                }
+                else
+                {
+                    ddlFilterType.Enabled = false;
+                }
+            }
+
+            ddlFilterService_Changed(null, null);
+        }
+
+        public void ddlFilterService_Changed(object sender, EventArgs e)
+        {
+            OccurrenceTypeCollection otc = new OccurrenceTypeCollection(Convert.ToInt32(ddlFilterTypeGroup.SelectedValue));
+            OccurrenceCollection oc;
+            ArrayList locations = new ArrayList(), occurrences = new ArrayList(), types = new ArrayList();
+            DateTime selectedServiceTime = DateTime.Parse(ddlFilterService.SelectedValue);
+            int idNumber;
+            bool searchAvailable = true;
+
+
+            foreach (OccurrenceType ot in otc)
+            {
+                oc = new OccurrenceCollection(ot.OccurrenceTypeId);
+                foreach (Occurrence o in oc)
+                {
+                    if (o.StartTime.Equals(selectedServiceTime) == true)
+                    {
+                        occurrences.Add(o);
+                        if (locations.Contains(o.LocationID) == false)
+                            locations.Add(o.LocationID);
+                        if (types.Contains(o.OccurrenceTypeID) == false)
+                            types.Add(o.OccurrenceTypeID);
+                    }
+                }
+            }
+
+            //
+            // Setup the basic attendance type list.
+            //
+            ddlFilterType.Items.Clear();
+            ddlFilterType.Items.Add(new ListItem("Show All", "-1"));
+            ddlFilterType.SelectedIndex = 0;
+            ddlFilterType.Enabled = true;
+
+            //
+            // Setup the basic occurrence list.
+            //
             ddlFilterOccurrence.Items.Clear();
-            ddlFilterOccurrence.Items.Add(new ListItem("Show Active", "-1"));
-            ddlFilterOccurrence.Items.Add(new ListItem("Show All", "-2"));
+            ddlFilterOccurrence.Items.Add(new ListItem("Show All", "-1"));
             ddlFilterOccurrence.SelectedIndex = 0;
+            ddlFilterOccurrence.Enabled = true;
 
             //
             // Setup the basic room list.
@@ -170,33 +280,113 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             ddlFilterLocation.Items.Clear();
             ddlFilterLocation.Items.Add(new ListItem("Show All", "-1"));
             ddlFilterLocation.SelectedIndex = 0;
+            ddlFilterLocation.Enabled = true;
+
+            //
+            // Add in all valid types.
+            //
+            foreach (int typeID in types)
+            {
+                OccurrenceType ot = new OccurrenceType(typeID);
+                ddlFilterType.Items.Add(new ListItem(ot.TypeName, ot.OccurrenceTypeId.ToString()));
+
+                if (!IsPostBack && this.Request.Params["typeID"] != null)
+                {
+                    if (typeID == Convert.ToInt32(this.Request.Params["typeID"]))
+                    {
+                        ddlFilterType.SelectedIndex = (ddlFilterType.Items.Count - 1);
+                        ddlFilterType_Changed(null, null);
+                        searchAvailable = false;
+                    }
+                }
+            }
 
             //
             // Add in all valid choices.
             //
-            if (ddlFilterAttendanceType.SelectedValue != "-1")
+            foreach (Occurrence o in occurrences)
             {
-                oc = new OccurrenceCollection(Convert.ToInt32(ddlFilterAttendanceType.SelectedValue));
+                OccurrenceType ot = new OccurrenceType(o.OccurrenceTypeID);
+                Location l = new Location(o.LocationID);
+                ddlFilterOccurrence.Items.Add(new ListItem(String.Format("{0} / {1} / {2}", o.Name, ot.TypeName, l.LocationName), o.OccurrenceID.ToString()));
 
-                foreach (Occurrence o in oc)
+                if (searchAvailable && !IsPostBack && Request.Params["occurrenceID"] != null)
                 {
-                    ddlFilterOccurrence.Items.Add(new ListItem(String.Format("{0} ({1})", o.Name, o.StartTime.ToShortDateTimeString()), o.OccurrenceID.ToString()));
+                    idNumber = Convert.ToInt32(Request.Params["occurrenceID"]);
+                    if (idNumber == o.OccurrenceID)
+                    {
+                        ddlFilterOccurrence.SelectedIndex = (ddlFilterOccurrence.Items.Count - 1);
+                        ddlFilterOccurrence_Changed(null, null);
+                        searchAvailable = false;
+                    }
                 }
-
-                lc = lc.FilterByOccurrenceType(Convert.ToInt32(ddlFilterAttendanceType.SelectedValue));
-                ddlFilterOccurrence.Enabled = true;
-            }
-            else
-            {
-                ddlFilterOccurrence.Enabled = false;
             }
 
             //
             // Add all valid locations.
             //
-            foreach (Location l in lc)
+            foreach (int locationID in locations)
             {
+                Location l = new Location(locationID);
                 ddlFilterLocation.Items.Add(new ListItem(String.Format("{0} - {1}", l.BuildingName, l.LocationName), l.LocationId.ToString()));
+                if (searchAvailable && !IsPostBack && Request.Params["locationID"] != null)
+                {
+                    idNumber = Convert.ToInt32(Request.Params["locationID"]);
+                    if (locationID == idNumber)
+                    {
+                        ddlFilterLocation.SelectedIndex = locations.IndexOf(idNumber);
+                        ddlFilterLocation_Changed(null, null);
+                        searchAvailable = false;
+                    }
+                }
+            }
+
+            dgAttendance_ReBind(null, null);
+        }
+
+        public void ddlFilterType_Changed(object sender, EventArgs e)
+        {
+            if (ddlFilterType.SelectedIndex == 0)
+            {
+                ddlFilterOccurrence.Enabled = true;
+                ddlFilterLocation.Enabled = true;
+            }
+            else
+            {
+                ddlFilterOccurrence.Enabled = false;
+                ddlFilterLocation.Enabled = false;
+            }
+
+            dgAttendance_ReBind(null, null);
+        }
+
+        public void ddlFilterOccurrence_Changed(object sender, EventArgs e)
+        {
+            if (ddlFilterOccurrence.SelectedIndex == 0)
+            {
+                ddlFilterType.Enabled = true;
+                ddlFilterLocation.Enabled = true;
+            }
+            else
+            {
+                ddlFilterType.Enabled = false;
+                ddlFilterLocation.Enabled = false;
+            }
+
+            dgAttendance_ReBind(null, null);
+        }
+
+        public void ddlFilterLocation_Changed(object sender, EventArgs e)
+        {
+            if (ddlFilterLocation.SelectedIndex == 0)
+            {
+                ddlFilterOccurrence.Enabled = true;
+                ddlFilterType.Enabled = true;
+            }
+            else
+            {
+                ddlFilterOccurrence.Enabled = false;
+                ddlFilterType.Enabled = false;
             }
 
             dgAttendance_ReBind(null, null);
@@ -228,43 +418,49 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 command.Append(",'' AS 'ability_level'");
             }
 
-            command.Append(" FROM core_occurrence_attendance AS coa" +
+            command.AppendFormat(" FROM core_occurrence_attendance AS coa" +
                             " LEFT JOIN core_person AS cp ON cp.person_id = coa.person_id" +
                             " LEFT JOIN core_occurrence AS co ON coa.occurrence_id = co.occurrence_id" +
                             " LEFT JOIN core_occurrence_type AS cot ON cot.occurrence_type_id = co.occurrence_type" +
                             " LEFT JOIN core_occurrence_type_group AS cotg ON cotg.group_id = cot.group_id" +
                             " LEFT JOIN orgn_location AS ol ON ol.location_id = co.location_id" +
-                            " WHERE co.location_id IS NOT NULL");
+                            " WHERE co.location_id IS NOT NULL" +
+                            " AND co.occurrence_start_time = '{0}'", (hfFilterService.Value != "" ? DateTime.Parse(hfFilterService.Value) : DateTime.Parse("01-01-1900 00:00:00")));
 
             //
             // Do the basic occurrence filtering.
             //
-            if (hfFilterOccurrenceID.Value == "-1")
-            {
-                command.Append(" AND coa.occurrence_id IN (SELECT occurrence_id FROM core_occurrence WHERE " +
-                                "(occurrence_start_time IS NOT NULL AND occurrence_end_time IS NOT NULL AND occurrence_start_time <= GetDate() AND occurrence_end_time >= GetDate())" +
-                                "OR (occurrence_start_time IS NOT NULL AND check_in_end IS NOT NULL AND occurrence_start_time <= GetDate() AND check_in_end >= GetDate())" +
-                                "OR (check_in_start IS NOT NULL AND occurrence_end_time IS NOT NULL AND check_in_start <= GetDate() AND occurrence_end_time >= GetDate())" +
-                                "OR (check_in_start IS NOT NULL AND check_in_end IS NOT NULL AND check_in_start <= GetDate() AND check_in_end >= GetDate())" +
-                                ")");
-            }
-            else if (Convert.ToInt32(hfFilterOccurrenceID.Value) >= 0)
+            if (hfFilterOccurrenceID.Value != "-1")
             {
                 command.AppendFormat(" AND coa.occurrence_id = {0}", hfFilterOccurrenceID.Value);
             }
 
             //
+            // Add a filter on name.
+            //
+            if (hfFilterName.Value != "")
+            {
+                if (hfFilterName.Value.IndexOf(' ') == -1)
+                    command.AppendFormat(" AND (cp.first_name LIKE '%{0}%' OR cp.last_name LIKE '%{0}%')", hfFilterName.Value);
+                else
+                {
+                    String[] names = hfFilterName.Value.Split(new char[1] { ' ' }, 2);
+                    command.AppendFormat(" AND (cp.first_name LIKE '%{0}%' OR cp.last_name LIKE '%{1}%')", names[0], names[1]);
+                }
+            }
+
+            //
             // Add a filter on attendance type.
             //
-            if (hfFilterAttendanceTypeGroupID.Value != "-1")
+            if (hfFilterTypeGroupID.Value != "-1")
             {
-                if (hfFilterAttendanceTypeID.Value != "-1")
+                if (hfFilterTypeID.Value != "-1")
                 {
-                    command.AppendFormat(" AND cot.occurrence_type_id = {0}", hfFilterAttendanceTypeID.Value);
+                    command.AppendFormat(" AND cot.occurrence_type_id = {0}", hfFilterTypeID.Value);
                 }
                 else
                 {
-                    command.AppendFormat(" AND cotg.group_id = {0}", hfFilterAttendanceTypeGroupID.Value);
+                    command.AppendFormat(" AND cotg.group_id = {0}", hfFilterTypeGroupID.Value);
                 }
             }
 
@@ -373,14 +569,69 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
         public void btnRePrint_Click(object sender, CommandEventArgs e)
         {
-            OccurrenceAttendance oa = new OccurrenceAttendance(Int32.Parse(e.CommandArgument.ToString()));
-            FamilyMember member = new FamilyMember(oa.PersonID);
-            Occurrence occurrence = oa.Occurrence;
-            List<Occurrence> list = new List<Occurrence>(1);
-            Boolean status;
+            OccurrenceAttendance oa;
+            FamilyMember member;
+            Occurrence occurrence;
+            List<Occurrence> list;
+            Boolean status = false;
+            Assembly asm;
+            String arenaBin;
+            Type t_controller;
+            Type[] paramTypes;
+            ComputerSystem cs;
 
+
+            //
+            // Set the basic information we need to print the labels.
+            //
+            oa = new OccurrenceAttendance(Int32.Parse(e.CommandArgument.ToString()));
+            member = new FamilyMember(oa.PersonID);
+            occurrence = oa.Occurrence;
+            list = new List<Occurrence>(1);
             list.Add(occurrence);
-            status = Controller.Print(member.Family(), member, list, oa, Controller.GetCurrentKiosk(Request.ServerVariables["REMOTE_ADDR"]));
+
+            try
+            {
+                //
+                // Find the location of the Arena bin directory and then try to load
+                // the Cccev assembly file.
+                //
+                arenaBin = new Organization().GetType().Assembly.CodeBase.Split(new string[] { "/Arena." }, StringSplitOptions.None)[0];
+                asm = System.Reflection.Assembly.LoadFrom(arenaBin + "/Arena.Custom.Cccev.CheckIn.dll");
+
+                //
+                // Get the controller object from the assembly.
+                //
+                t_controller = asm.GetType("Arena.Custom.Cccev.CheckIn.Controller");
+
+                //
+                // Load the 2 methods we need from the Cccev assembly.
+                //
+                paramTypes = new Type[] { typeof(Family), typeof(FamilyMember), typeof(IEnumerable<Occurrence>),
+                                    typeof(OccurrenceAttendance), typeof(ComputerSystem) };
+                System.Reflection.MethodInfo mi_Print = t_controller.GetMethod("Print", paramTypes);
+                paramTypes = new Type[] { typeof(string) };
+                System.Reflection.MethodInfo mi_GetCurrentKiosk = t_controller.GetMethod("GetCurrentKiosk", paramTypes);
+
+                //
+                // Call the GetCurrentKiosk method to find the
+                // ComputerSystem object we need to print with.
+                //
+                cs = (ComputerSystem)mi_GetCurrentKiosk.Invoke(null, new String[] { Request.ServerVariables["REMOTE_ADDR"] });
+                if (cs != null)
+                {
+                    //
+                    // Try to print the person's name tags again.
+                    //
+                    object[] parameters = new object[] { member.Family(), member, list, oa, cs };
+                    status = (Boolean)mi_Print.Invoke(null, parameters);
+                }
+            }
+            catch
+            {
+                status = false;
+            }
+
             ((LinkButton)sender).Text = String.Format("Re-Print Labels ({0})", (status ? "OK" : "Error"));
         }
     }

@@ -136,10 +136,22 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 }
                 else if (oc.Count > 0)
                 {
-                    ddlFilterTypeGroup.SelectedValue = new OccurrenceType(oc[0].OccurrenceTypeID).GroupId.ToString();
+                    //
+                    // Find the first occurrence with an actual location.
+                    //
+                    foreach (Occurrence o in oc)
+                    {
+                        if (o.LocationID != -1)
+                        {
+                            ddlFilterTypeGroup.SelectedValue = new OccurrenceType(o.OccurrenceTypeID).GroupId.ToString();
+                            break;
+                        }
+                    }
                 }
-                else
+
+                if (ddlFilterTypeGroup.SelectedValue == null || ddlFilterTypeGroup.SelectedValue == "")
                     ddlFilterTypeGroup.SelectedIndex = 0;
+
                 ddlFilterTypeGroup_Changed(null, null);
                 btnFilterApply_Click(null, null);
             }

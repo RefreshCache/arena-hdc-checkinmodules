@@ -48,6 +48,10 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             "SELECT [attribute_id], [attribute_name] FROM [core_attribute] WHERE [attribute_type] = 3 AND [attribute_group_id] = 16 ORDER BY [attribute_name]")]
         public string AbilityLevelAttributeIDSetting { get { return Setting("AbilityLevelAttributeID", "", false); } }
 
+        [ListFromSqlSetting("Default Attendance Group", "Defines the default attendance group to use when determining the active service.", false, "",
+            "SELECT [group_id],[group_name] FROM [core_occurrence_type_group]")]
+        public string DefaultAttendanceGroupIDSetting { get { return Setting("DefaultAttendanceGroupID", "", false); } }
+
         #endregion
 
         #region Event Handlers
@@ -102,6 +106,10 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 if (this.Request.Params["groupID"] != null)
                 {
                     ddlFilterTypeGroup.SelectedValue = this.Request.Params["groupID"];
+                }
+                else if (DefaultAttendanceGroupIDSetting != "")
+                {
+                    ddlFilterTypeGroup.SelectedValue = DefaultAttendanceGroupIDSetting.ToString();
                 }
                 else if (oc.Count > 0)
                 {

@@ -65,6 +65,10 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         [PageSettingAttribute("Attendance Detail Page", "Page to use for viewing detailed attendance information.", false)]
         public int AttendanceDetailPageID { get { return Convert.ToInt32(Setting("AttendanceDetailPageID", "-1", false)); } }
 
+        [ListFromSqlSetting("Default Attendance Group", "Defines the default attendance group to use when determining the active service.", false, "",
+            "SELECT [group_id],[group_name] FROM [core_occurrence_type_group]")]
+        public string DefaultAttendanceGroupIDSetting { get { return Setting("DefaultAttendanceGroupID", "", false); } }
+
         #endregion
 
         #region Event Handlers
@@ -126,7 +130,11 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     ddlFilterTypeGroup.Items.Add(new ListItem(otg.GroupName, otg.GroupId.ToString()));
                 }
                 OccurrenceCollection oc = new OccurrenceCollection(DateTime.Now, DateTime.Now);
-                if (oc.Count > 0)
+                if (DefaultAttendanceGroupIDSetting != "")
+                {
+                    ddlFilterTypeGroup.SelectedValue = DefaultAttendanceGroupIDSetting.ToString();
+                }
+                else if (oc.Count > 0)
                 {
                     ddlFilterTypeGroup.SelectedValue = new OccurrenceType(oc[0].OccurrenceTypeID).GroupId.ToString();
                 }

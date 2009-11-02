@@ -621,7 +621,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 //
                 // Get the controller object from the assembly.
                 //
-                t_controller = asm.GetType("Arena.Custom.Cccev.CheckIn.Controller");
+                t_controller = asm.GetType("Arena.Custom.Cccev.CheckIn.CheckInController");
 
                 //
                 // Load the 2 methods we need from the Cccev assembly.

@@ -34,6 +34,8 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
 	using Arena.Portal;
 	using Arena.Core;
+    using Arena.Organization;
+    using Arena.SmallGroup;
 
 	public partial class AttendanceOverview : PortalControl
 	{
@@ -41,8 +43,23 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         const int kOccurrenceNameColumn = 1;
         const int kOccurrenceTypeLinkColumn = 2;
         const int kOccurrenceTypeColumn = 3;
+        const int kOccurrenceCheckInStartColumn = 4;
+        const int kOccurrenceCheckInEndColumn = 5;
+        const int kOccurrenceLocationColumn = 6;
+        const int kOccurrenceAttendanceColumn = 7;
+        const int kOccurrenceCloseColumn = 8;
+
         const int kLocationLocationLinkColumn = 0;
         const int kLocationLocationColumn = 1;
+        const int kLocationAttendanceColumn = 2;
+        const int kLocationActiveOccurrencesColumn = 3;
+        const int kLocationCloseColumn = 4;
+
+        const int kCloseOccurrenceIDColumn = 0;
+        const int kCloseOccurrenceNameColumn = 1;
+        const int kCloseAttendanceTypeColumn = 2;
+        const int kCloseOldLocationColumn = 3;
+        const int kCloseNewLocationColumn = 4;
 
         public static string GetBaseURL()
         {
@@ -76,7 +93,9 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         protected void Page_Init(object sender, EventArgs e)
         {
             dgOccurrence.ReBind += new Arena.Portal.UI.DataGridReBindEventHandler(dgOccurrence_ReBind);
+            dgOccurrence.ItemDataBound += new DataGridItemEventHandler(dgOccurrence_DataBound);
             dgLocation.ReBind += new Arena.Portal.UI.DataGridReBindEventHandler(dgLocation_ReBind);
+            dgLocation.ItemDataBound += new DataGridItemEventHandler(dgLocation_DataBound);
         }
         
         private void Page_Load(object sender, System.EventArgs e)
@@ -154,8 +173,17 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
                 ddlFilterTypeGroup_Changed(null, null);
                 btnFilterApply_Click(null, null);
+
+                //
+                // Setup options on the finalize close button.
+                //
+                lbCloseFinish.Style.Add("text-decoration", "none");
+                lbCloseFinish.Attributes.Add("onmouseover", "this.style.textDecoration='underline';");
+                lbCloseFinish.Attributes.Add("onmouseout", "this.style.textDecoration='none';");
             }
-		}
+
+            dgClose_Bind();
+        }
 
         void dgOccurrence_ReBind(object sender, EventArgs e)
         {
@@ -181,6 +209,176 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         {
             dgLocation.DataSource = GetLocationData();
             dgLocation.DataBind();
+        }
+
+        public void dgOccurrence_DataBound(object sender, DataGridItemEventArgs e)
+        {
+            DataRowView drv = (DataRowView)e.Item.DataItem;
+            LinkButton lb;
+
+            //
+            // Skip row header and footer.
+            //
+            if (e.Item.ItemIndex == -1)
+                return;
+
+            lb = (LinkButton)e.Item.Cells[kOccurrenceCloseColumn].Controls[1];
+            if (drv["occurrence_closed"].ToString() == "True" ||
+                (DateTime.Parse(drv["occurrence_end_time"].ToString()) < DateTime.Now &&
+                DateTime.Parse(drv["check_in_end"].ToString()) < DateTime.Now))
+                lb.Visible = false;
+            lb.CommandArgument = drv["occurrence_id"].ToString();
+        }
+
+        public void dgLocation_DataBound(object sender, DataGridItemEventArgs e)
+        {
+            DataRowView drv = (DataRowView)e.Item.DataItem;
+            LinkButton lb;
+
+            //            new Occurrence(e.Item.DataItem
+            //
+            // Skip row header and footer.
+            //
+            if (e.Item.ItemIndex == -1)
+                return;
+
+            lb = (LinkButton)e.Item.Cells[kLocationCloseColumn].Controls[1];
+            if (drv["active_occurrence_count"].ToString() == "0")
+                lb.Visible = false;
+            lb.CommandArgument = drv["location_id"].ToString();
+        }
+
+        public void dgOccurrence_Close(object sender, CommandEventArgs e)
+        {
+            hfCloseOccurrenceIDs.Value = e.CommandArgument.ToString();
+            lbCloseError.Text = "";
+            pnlCloseOccurrence.Visible = true;
+            pnlDataFilter.Visible = false;
+            pnlLocationGrid.Visible = false;
+            pnlOccurrenceGrid.Visible = false;
+            pnlTotalAttendance.Visible = false;
+
+            dgClose_Bind();
+        }
+
+        public void dgClose_Bind()
+        {
+            DropDownList ddl;
+            TableRow tr;
+            TableCell cell;
+            Label lb;
+
+            //
+            // Remove everything except the first row.
+            //
+			while (tblClose.Rows.Count > 2)
+				tblClose.Rows.RemoveAt(1);
+
+            if (hfCloseOccurrenceIDs.Value != "")
+            {
+                string[] ids = hfCloseOccurrenceIDs.Value.Split(new char[] { ',' });
+
+
+                //
+                // For each occurrence, put up a table row for the user to
+                // choose the new location for the occurrence.
+                //
+                foreach (string occurrenceID in ids)
+                {
+                    Occurrence o = new Occurrence(Convert.ToInt32(occurrenceID));
+
+                    tr = new TableRow();
+                    tblClose.Rows.AddAt(1, tr);
+
+                    //
+                    // Add in the occurrence ID.
+                    //
+                    cell = new TableCell();
+                    tr.Cells.Add(cell);
+					cell.Style.Add("display", "none");
+					lb = new Label();
+                    cell.Controls.Add(lb);
+                    lb.Text = o.OccurrenceID.ToString();
+
+                    //
+                    // Add in the cell for the occurrence.
+                    //
+                    cell = new TableCell();
+                    tr.Cells.Add(cell);
+                    lb = new Label();
+                    cell.Controls.Add(lb);
+                    lb.CssClass = "smallText";
+                    lb.Text = o.Name;
+
+                    //
+                    // Add in the cell showing the occurrence type.
+                    //
+                    cell = new TableCell();
+                    tr.Cells.Add(cell);
+                    lb = new Label();
+                    cell.Controls.Add(lb);
+                    lb.CssClass = "smallText";
+                    lb.Text = o.OccurrenceType.TypeName;
+
+                    //
+                    // Add in the cell showing the old location name.
+                    //
+                    cell = new TableCell();
+                    tr.Cells.Add(cell);
+                    lb = new Label();
+                    cell.Controls.Add(lb);
+                    lb.CssClass = "smallText";
+                    lb.Text = new Location(o.LocationID).FullName;
+
+                    //
+                    // Add in the cell for the new room selection.
+                    //
+                    cell = new TableCell();
+                    tr.Cells.Add(cell);
+                    ddl = new DropDownList();
+                    cell.Controls.Add(ddl);
+                    ddl.Items.Add(new ListItem("", ""));
+                    if (true)
+                        ddl.Items.Add(new ListItem("Do Not Open", "-1"));
+                    foreach (Location l in o.OccurrenceType.Locations)
+                    {
+                        if (l.LocationId == o.LocationID)
+                            continue;
+
+                        ddl.Items.Add(new ListItem(l.FullName, l.LocationId.ToString()));
+                    }
+                }
+            }
+        }
+
+        public void dgLocation_Close(object sender, CommandEventArgs e)
+        {
+            StringBuilder sb = new StringBuilder();
+            Location l;
+            int i;
+
+
+            //
+            // Run the function to get the active occurrences for this location.
+            //
+            SqlDataReader reader = new Arena.DataLayer.Organization.OrganizationData().ExecuteReader(
+                        String.Format("SELECT * FROM cust_hdc_checkin_func_active_occurrencesByLocation({0})", e.CommandArgument));
+            while (reader.Read())
+            {
+                if (sb.Length > 0)
+                    sb.Append(",");
+                sb.Append(reader[0].ToString());
+            }
+
+            hfCloseOccurrenceIDs.Value = sb.ToString();
+            lbCloseError.Text = "";
+            pnlCloseOccurrence.Visible = true;
+            pnlDataFilter.Visible = false;
+            pnlLocationGrid.Visible = false;
+            pnlOccurrenceGrid.Visible = false;
+            pnlTotalAttendance.Visible = false;
+
+            dgClose_Bind();
         }
 
         public void ddlFilterTypeGroup_Changed(object sender, EventArgs e)
@@ -238,7 +436,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             dgOccurrence_ReBind(null, null);
             dgLocation_ReBind(null, null);
 
-            if (true)
+            if (AttendanceDetailPageID != -1)
             {
                 object[] parms = new object[3] { AttendanceDetailPageID, Server.UrlEncode(hfFilterTypeGroupID.Value), Server.UrlEncode(hfFilterService.Value) };
 
@@ -253,6 +451,128 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 hlDetails.Visible = false;
             }
         }
+
+        public void btnCloseFinish_Click(object sender, EventArgs e)
+        {
+            DropDownList ddl;
+            TableRow tr;
+            int i;
+
+
+            //
+            // Walk through each occurrence row and make sure they have
+            // selected a new target location.
+            //
+            for (i = 1; i < (tblClose.Rows.Count - 1); i++)
+            {
+                tr = tblClose.Rows[i];
+                ddl = (DropDownList)tr.Cells[kCloseNewLocationColumn].Controls[0];
+                if (ddl.SelectedValue == "")
+                {
+                    lbCloseError.Text = "You must select a new target location for each occurrence.";
+
+                    return;
+                }
+                else
+                {
+                    lbCloseError.Text = "";
+                }
+            }
+
+            //
+            // Walk through each occurrence row and open a new occurrence
+            // if they have selected a new location. After the occurrence
+            // is opened, close the old occurrence.
+            //
+            for (i = 1; i < (tblClose.Rows.Count - 1); i++)
+            {
+                tr = tblClose.Rows[i];
+                ddl = (DropDownList)tr.Cells[kCloseNewLocationColumn].Controls[0];
+                try
+                {
+                    Occurrence oldOccurrence;
+                    int locationID = Convert.ToInt32(ddl.SelectedValue);
+
+                    oldOccurrence = new Occurrence(Convert.ToInt32(((Label)tr.Cells[kCloseOccurrenceIDColumn].Controls[0]).Text));
+
+                    //
+                    // Setup the new location.
+                    //
+                    if (locationID != -1)
+                    {
+                        ProfileOccurrence po = new ProfileOccurrence(oldOccurrence.OccurrenceID);
+                        GroupOccurrence go = new GroupOccurrence(oldOccurrence.OccurrenceID);
+                        Occurrence newOccurrence = new Occurrence();
+
+                        newOccurrence.AreaID = oldOccurrence.AreaID;
+                        newOccurrence.CheckInEnd = oldOccurrence.CheckInEnd;
+                        newOccurrence.CheckInStart = oldOccurrence.CheckInStart;
+                        newOccurrence.Description = oldOccurrence.Description;
+                        newOccurrence.EndTime = oldOccurrence.EndTime;
+                        newOccurrence.LocationID = locationID;
+                        newOccurrence.Location = new Location(locationID).FullName;
+                        newOccurrence.MembershipRequired = oldOccurrence.MembershipRequired;
+                        newOccurrence.Name = oldOccurrence.Name;
+                        newOccurrence.OccurrenceTypeID = oldOccurrence.OccurrenceTypeID;
+                        newOccurrence.StartTime = oldOccurrence.StartTime;
+                        newOccurrence.Title = oldOccurrence.Title;
+                        newOccurrence.Save(CurrentUser.Identity.Name);
+
+                        //
+                        // Create the link to the profile, if there is one.
+                        //
+                        if (po.ProfileID != -1)
+                        {
+                            ProfileOccurrence npo = new ProfileOccurrence(newOccurrence.OccurrenceID);
+                            npo.ProfileID = po.ProfileID;
+                            npo.Save(CurrentUser.Identity.Name);
+                        }
+
+                        //
+                        // Create the link to the group, if there is one.
+                        //
+                        if (go.GroupID != -1)
+                        {
+                            GroupOccurrence ngo = new GroupOccurrence(newOccurrence.OccurrenceID);
+                            ngo.GroupID = go.GroupID;
+                            ngo.Save(CurrentUser.Identity.Name);
+                        }
+                    }
+
+                    //
+                    // Close the old occurrence.
+                    //
+                    oldOccurrence.OccurrenceClosed = true;
+                    oldOccurrence.Save(CurrentUser.Identity.Name);
+                }
+                catch
+                {
+                }
+            }
+
+			btnCloseCancel_Click(sender, e);
+        }
+
+		public void btnCloseCancel_Click(object sender, EventArgs e)
+		{
+			//
+			// Clear old content.
+			//
+			while (tblClose.Rows.Count > 2)
+				tblClose.Rows.RemoveAt(1);
+
+			//
+			// Switch back to the normal view.
+			//
+			pnlCloseOccurrence.Visible = false;
+			pnlDataFilter.Visible = true;
+			pnlLocationGrid.Visible = true;
+			pnlOccurrenceGrid.Visible = true;
+			pnlTotalAttendance.Visible = true;
+
+			dgOccurrence_ReBind(null, null);
+			dgLocation_ReBind(null, null);
+		}
 
         #endregion
 
@@ -272,7 +592,6 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             return SqlReaderToDataTable(reader);
         }
 
-
         private DataTable GetLocationData()
         {
             ArrayList paramList = new ArrayList();
@@ -288,7 +607,6 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
             return SqlReaderToDataTable(reader);
         }
-
 
         static private DataTable SqlReaderToDataTable(SqlDataReader rdr)
         {

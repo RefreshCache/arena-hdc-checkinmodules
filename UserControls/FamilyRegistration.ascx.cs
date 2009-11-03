@@ -820,6 +820,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     else
                     {
                         string[] names = tbFindName.Text.Split(new char[1] { ' ' }, 2);
+						int i;
 
                         //
                         // Search for a specific first and last name.
@@ -827,7 +828,22 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                         collection = new PersonCollection();
                         collection.LoadByName(names[0], names[1]);
 
-                        people = collection.ToArray();
+						//
+						// Search for last name with the space.
+						//
+						collection2 = new PersonCollection();
+						collection2.LoadByName("", tbFindName.Text);
+
+						//
+						// Merge the two searches.
+						//
+						for (i = 0; i < collection2.Count; i++)
+						{
+							if (collection.FindByID(collection2[i].PersonID) == null)
+								collection.Add(collection2[i]);
+						}
+
+						people = collection.ToArray();
                     }
                 }
                 else if (tbFindPhone.Text != "")

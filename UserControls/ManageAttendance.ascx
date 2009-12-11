@@ -1,6 +1,8 @@
 <%@ Control Language="C#" AutoEventWireup="true" CodeFile="ManageAttendance.ascx.cs" Inherits="ArenaWeb.UserControls.Custom.HDC.CheckIn.ManageAttendance" %>
 <%@ Register TagPrefix="Arena" Namespace="Arena.Portal.UI" Assembly="Arena.Portal.UI" %>
 
+<link type="text/css" rel="stylesheet" href="css/personPopup.css" />
+
 <asp:HiddenField ID="hfFilterTypeGroupID" runat="server" Value="-1" />
 <asp:HiddenField ID="hfFilterService" runat="server" Value="" />
 <asp:HiddenField ID="hfFilterName" runat="server" Value="" />
@@ -44,16 +46,20 @@
     </asp:Panel>
 </div>
 <asp:Panel ID="pnlDataGrid" Visible="true" runat="server">
-    <Arena:DataGrid ID="dgAttendance" runat="server" Width="100%" ShowFooter="true">
+    <Arena:DataGrid ID="dgAttendance" runat="server" Width="100%" ShowFooter="true" OnItemDataBound="dgAttendance_ItemDataBound">
         <Columns>
             <asp:TemplateColumn HeaderText="Name" SortExpression="common_name" Visible="true" HeaderStyle-Wrap="false" HeaderStyle-VerticalAlign="Top">
                 <ItemTemplate>
-                    <a href='default.aspx?page=<%# PersonDetailPageID %>&guid=<%# DataBinder.Eval(Container.DataItem, "guid") %>'><%# DataBinder.Eval(Container.DataItem, "first_name") %> <b><%# DataBinder.Eval(Container.DataItem, "last_name") %></b></a>
+                    <asp:LinkButton ID="lbName" runat="server"><%# DataBinder.Eval(Container.DataItem, "first_name") %> <b><%# DataBinder.Eval(Container.DataItem, "last_name") %></b></asp:LinkButton>
+                    <asp:LinkButton ID="lbAttendanceRePrint" runat="server" style="display: none;" CommandArgument='<%# DataBinder.Eval(Container.DataItem, "occurrence_attendance_id") %>' OnCommand="btnRePrint_Click">Re-Print Labels</asp:LinkButton>
+                    <asp:LinkButton ID="lbNumberBoard" runat="server" style="display: none;" CommandArgument='<%# DataBinder.Eval(Container.DataItem, "occurrence_attendance_id") %>' OnCommand="btnNumberBoard_Click">Post Number</asp:LinkButton>
                 </ItemTemplate>
             </asp:TemplateColumn>
             <asp:TemplateColumn HeaderText="Name" SortExpression="common_name" Visible="true" HeaderStyle-Wrap="false" HeaderStyle-VerticalAlign="Top">
                 <ItemTemplate>
-                    <asp:Label><%# DataBinder.Eval(Container.DataItem, "first_name") %> <b><%# DataBinder.Eval(Container.DataItem, "last_name") %></b></asp:Label>
+                    <asp:Label ID="lbName2" runat="server"><%# DataBinder.Eval(Container.DataItem, "first_name") %> <b><%# DataBinder.Eval(Container.DataItem, "last_name") %></b></asp:Label>
+                    <asp:LinkButton ID="lbAttendanceRePrint2" runat="server" style="display: none;" CommandArgument='<%# DataBinder.Eval(Container.DataItem, "occurrence_attendance_id") %>' OnCommand="btnRePrint_Click">Re-Print Labels</asp:LinkButton>
+                    <asp:LinkButton ID="lbNumberBoard2" runat="server" style="display: none;" CommandArgument='<%# DataBinder.Eval(Container.DataItem, "occurrence_attendance_id") %>' OnCommand="btnNumberBoard_Click">Post Number</asp:LinkButton>
                 </ItemTemplate>
             </asp:TemplateColumn>
             <asp:TemplateColumn HeaderText="Gender" Visible="true" HeaderStyle-Wrap="false" HeaderStyle-VerticalAlign="Top">
@@ -76,11 +82,8 @@
             <asp:BoundColumn HeaderText="Attendance Type" DataField="common_attendance_name" SortExpression="common_attendance_name" Visible="true" HeaderStyle-Wrap="false" HeaderStyle-VerticalAlign="Top"></asp:BoundColumn>
             <asp:BoundColumn HeaderText="Occurrence" DataField="common_occurrence_name" SortExpression="common_occurrence_name" Visible="true" HeaderStyle-Wrap="false" HeaderStyle-VerticalAlign="Top"></asp:BoundColumn>
             <asp:BoundColumn HeaderText="Location" DataField="common_location_name" SortExpression="common_location_name" Visible="true" HeaderStyle-Wrap="false" HeaderStyle-VerticalAlign="Top"></asp:BoundColumn>
-            <asp:TemplateColumn HeaderText="Re-Print" Visible="true" HeaderStyle-Wrap="false" HeaderStyle-VerticalAlign="Top">
-                <ItemTemplate>
-                    <asp:LinkButton ID="lbAttendanceRePrint" runat="server" CommandArgument='<%# DataBinder.Eval(Container.DataItem, "occurrence_attendance_id") %>' OnCommand="btnRePrint_Click">Re-Print Labels</asp:LinkButton>
-                </ItemTemplate>
-            </asp:TemplateColumn>
         </Columns>
     </Arena:DataGrid>
 </asp:Panel>
+
+<asp:Label ID="lbStatus" runat="server" />

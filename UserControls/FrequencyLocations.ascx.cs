@@ -152,20 +152,17 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 			new Arena.DataLayer.Organization.OrganizationData().ExecuteNonQuery(
 				"cust_hdc_checkin_sp_delete_locationsByTemplateID", paramList);
 
-			if (list.Count < cblLocations.Items.Count)
+			foreach (string location_id in list)
 			{
-				foreach (string location_id in list)
-				{
-					//
-					// Create the template location link if the location has been
-					// selected.
-					//
-					paramList = new ArrayList();
-					paramList.Add(new SqlParameter("OccurrenceTypeTemplateId", EditTemplateID));
-					paramList.Add(new SqlParameter("LocationId", Convert.ToInt32(location_id)));
-					new Arena.DataLayer.Organization.OrganizationData().ExecuteNonQuery(
-						"cust_hdc_checkin_sp_save_template_location", paramList);
-				}
+				//
+				// Create the template location link if the location has been
+				// selected.
+				//
+				paramList = new ArrayList();
+				paramList.Add(new SqlParameter("OccurrenceTypeTemplateId", EditTemplateID));
+				paramList.Add(new SqlParameter("LocationId", Convert.ToInt32(location_id)));
+				new Arena.DataLayer.Organization.OrganizationData().ExecuteNonQuery(
+					"cust_hdc_checkin_sp_save_template_location", paramList);
 			}
 
 			ShowList();

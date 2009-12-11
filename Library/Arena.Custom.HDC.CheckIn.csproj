@@ -8,8 +8,8 @@
     <ProjectGuid>{577EBF7B-4689-4926-92B3-FCDECB419BF8}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Library</RootNamespace>
-    <AssemblyName>Library</AssemblyName>
+    <RootNamespace>Arena.Custom.HDC.CheckIn</RootNamespace>
+    <AssemblyName>Arena.Custom.HDC.CheckIn</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -31,6 +31,18 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Arena.Custom.Cccev.CheckIn, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\CheckIn\Arena.Custom.Cccev.CheckIn\obj\Debug\Arena.Custom.Cccev.CheckIn.dll</HintPath>
+    </Reference>
+    <Reference Include="Arena.Custom.Cccev.DataUtils, Version=2009.1.100.22369, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\CheckIn\Arena.Custom.Cccev.DataUtils\obj\Debug\Arena.Custom.Cccev.DataUtils.dll</HintPath>
+    </Reference>
+    <Reference Include="Arena.Framework, Version=2008.3.100.36613, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Arena ChMS\Arena\bin\Arena.Framework.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -47,6 +59,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="HDCSecurityCode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

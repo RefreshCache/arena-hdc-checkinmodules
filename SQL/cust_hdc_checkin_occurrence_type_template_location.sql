@@ -1,6 +1,3 @@
-USE [ArenaDB]
-GO
-
 /****** Object:  Table [dbo].[cust_hdc_checkin_occurrence_type_template_location]    Script Date: 10/22/2009 13:19:46 ******/
 SET ANSI_NULLS ON
 GO

@@ -52,14 +52,20 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             "SELECT [group_id],[group_name] FROM [core_occurrence_type_group]")]
         public string DefaultAttendanceGroupIDSetting { get { return Setting("DefaultAttendanceGroupID", "", false); } }
 
-        #endregion
+		[NumericSetting("DisplayGroupID", "Display group ID to use when posting new numbers to the system.", true)]
+		public int DisplayGroupID { get { return Convert.ToInt32(Setting("DisplayGroupID", "0", true)); } }
+
+		#endregion
 
         #region Event Handlers
 
         protected void Page_Init(object sender, EventArgs e)
         {
             dgAttendance.ReBind += new Arena.Portal.UI.DataGridReBindEventHandler(dgAttendance_ReBind);
-        }
+			ScriptManager.RegisterClientScriptInclude(Page, Page.GetType(), "jquery.min", "include/scripts/jquery.1.3.2.min.js");
+			ScriptManager.RegisterClientScriptInclude(Page, Page.GetType(), "jquery.hoverIntent", "include/scripts/jquery.hoverIntent.min.js");
+			ScriptManager.RegisterClientScriptInclude(Page, Page.GetType(), "hdcHoverPopup", AppRelativeTemplateSourceDirectory.Remove(0, 2) + "Scripts/hdcHoverPopup.js");
+		}
 
 		private void Page_Load(object sender, System.EventArgs e)
 		{
@@ -140,6 +146,48 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             dgAttendance.DataBind();
         }
 
+		public void dgAttendance_ItemDataBound(object sender, DataGridItemEventArgs e)
+		{
+			if (e.Item.ItemType == ListItemType.Item || e.Item.ItemType == ListItemType.AlternatingItem)
+			{
+				if (dgAttendance.EditItemIndex == -1)
+				{
+					ClientScriptManager csm = Page.ClientScript;
+					SqlDataReader reader;
+					DataRowView drv = (DataRowView)e.Item.DataItem;
+					Control holder = (PersonDetailPageID == -1 ? e.Item.Controls[1] : e.Item.Controls[0]);
+//					Control holder = e.Item.Controls[0];
+					Control hover = holder.Controls[1];
+					LinkButton lbReprint = (LinkButton)holder.Controls[3];
+					LinkButton lbPost = (LinkButton)holder.Controls[5];
+					ArrayList paramList;
+					String html, securityNumber;
+
+					if (PersonDetailPageID != -1)
+						((LinkButton)hover).Attributes["href"] = "default.aspx?page=" + PersonDetailPageID.ToString() + "&guid=" + drv["guid"];
+
+					html = "<span class=\"smallText\"><a href=\"" + csm.GetPostBackClientHyperlink(lbReprint, null) + "\">Reprint</a> labels for " + drv["first_name"] + "<br /></span>";
+					html = html + "<br />";
+
+					//
+					// Check if the security code is already posted.
+					//
+					paramList = new ArrayList();
+					securityNumber = drv["security_code"].ToString().Substring(2);
+					paramList.Add(new SqlParameter("@UserInfo", Convert.ToInt32(drv["occurrence_attendance_id"])));
+					reader = new Arena.DataLayer.Organization.OrganizationData().ExecuteReader("cust_hdc_checkin_sp_get_notesForUserInfo", paramList);
+					if (reader.HasRows)
+						html = html + "<span class=\"smallText\">Remove security number <a href=\"" + csm.GetPostBackClientHyperlink(lbPost, null) + "\">" + securityNumber + "</a><br /></span>";
+					else
+						html = html + "<span class=\"smallText\">Post security number <a href=\"" + csm.GetPostBackClientHyperlink(lbPost, null) + "\">" + securityNumber + "</a><br /></span>";
+					reader.Close();
+
+					html = html.Replace("'", "\\'");
+					ScriptManager.RegisterClientScriptBlock(Page, Page.GetType(), "hover" + hover.ClientID, "$(document).ready(function() {popupOverObject('" + hover.ClientID + "', '" + html + "');});", true);
+				}
+			}
+		}
+
         public void btnFilterApply_Click(object sender, EventArgs e)
         {
             hfFilterTypeGroupID.Value = ddlFilterTypeGroup.SelectedValue;
@@ -213,40 +261,6 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
             if (ddlFilterService.Items.Count > 0)
                 ddlFilterService.SelectedIndex = matchIndex;
-
-            //
-            // Build up the Attendance Type drop down list.
-            //
-            if (false)
-            {
-                ddlFilterType.Items.Clear();
-                ddlFilterType.Items.Add(new ListItem("Show All", "-1"));
-                ddlFilterType.SelectedIndex = 0;
-                if (ddlFilterTypeGroup.SelectedValue != "-1")
-                {
-                    otc = new OccurrenceTypeCollection(Convert.ToInt32(ddlFilterTypeGroup.SelectedValue));
-
-                    foreach (OccurrenceType ot in otc)
-                    {
-                        ddlFilterType.Items.Add(new ListItem(ot.TypeName, ot.OccurrenceTypeId.ToString()));
-
-                        if (!IsPostBack && this.Request.Params["typeID"] != null)
-                        {
-                            if (ot.OccurrenceTypeId == Convert.ToInt32(this.Request.Params["typeID"]))
-                            {
-                                ddlFilterType.SelectedIndex = (ddlFilterType.Items.Count - 1);
-                                ddlFilterType_Changed(null, null);
-                            }
-                        }
-                    }
-
-                    ddlFilterType.Enabled = true;
-                }
-                else
-                {
-                    ddlFilterType.Enabled = false;
-                }
-            }
 
             ddlFilterService_Changed(null, null);
         }
@@ -501,7 +515,6 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             return SqlReaderToDataTable(reader);
         }
 
-
         static private DataTable SqlReaderToDataTable(SqlDataReader rdr)
         {
             DataTable dt = new DataTable("hdc_customTable");
@@ -529,7 +542,6 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             return dt;
         }
 
-
         public String GraduationDateToGradeString(Object graduationYear)
         {
             DateTime date = DateTime.Parse(graduationYear.ToString());
@@ -543,7 +555,6 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
             return "";
         }
-
 
         public String BirthDateToAgeString(Object birth_date)
         {
@@ -651,7 +662,84 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 status = false;
             }
 
-            ((LinkButton)sender).Text = String.Format("Re-Print Labels ({0})", (status ? "OK" : "Error"));
-        }
-    }
+			dgAttendance_ReBind(null, null);
+		}
+
+		public void btnNumberBoard_Click(object sender, CommandEventArgs e)
+		{
+			OccurrenceAttendance oa = new OccurrenceAttendance(Convert.ToInt32(e.CommandArgument));
+			Arena.DataLayer.Organization.OrganizationData org = new Arena.DataLayer.Organization.OrganizationData();
+			SqlDataReader reader;
+			ArrayList paramList;
+			String securityNumber = oa.SecurityCode.Substring(2);
+
+			//
+			// Check if the security code is already posted.
+			//
+			paramList = new ArrayList();
+			paramList.Add(new SqlParameter("@UserInfo", oa.OccurrenceAttendanceID));
+			reader = org.ExecuteReader("cust_hdc_checkin_sp_get_notesForUserInfo", paramList);
+			if (reader.HasRows)
+			{
+				//
+				// Security code exists, we just need to remove it.
+				//
+				while (reader.Read())
+				{
+					ArrayList p = new ArrayList();
+					p.Add(new SqlParameter("@NoteId", reader["note_id"]));
+					org.ExecuteNonQuery("cust_hdc_checkin_sp_del_number_board_note", p);
+				}
+				reader.Close();
+			}
+			else
+			{
+				SqlParameter output;
+				String html;
+
+				//
+				// Security code is not posted, post a new one.
+				//
+				reader.Close();
+
+				//
+				// Generate the HTML for this note.
+				//
+				html = String.Format("<p id=\"SecurityCode\">{0}</p>", securityNumber);
+
+				paramList = new ArrayList();
+				paramList.Add(new SqlParameter("@NoteId", -1));
+				paramList.Add(new SqlParameter("@NoteHtml", html));
+				paramList.Add(new SqlParameter("@NoteImage", DBNull.Value));
+				paramList.Add(new SqlParameter("@NoteInfo", DBNull.Value));
+				paramList.Add(new SqlParameter("@SystemId", DBNull.Value));
+				paramList.Add(new SqlParameter("@DisplayGroupId", DisplayGroupID));
+				paramList.Add(new SqlParameter("@UserInfo", oa.OccurrenceAttendanceID));
+				paramList.Add(new SqlParameter("@UserId", CurrentUser.Identity.Name));
+				output = new SqlParameter("@ID", null);
+				output.Direction = ParameterDirection.Output;
+				output.DbType = DbType.Int32;
+				paramList.Add(output);
+				org.ExecuteNonQuery("cust_hdc_checkin_sp_save_number_board_note", paramList);
+			}
+
+			dgAttendance_ReBind(null, null);
+		}
+
+		public static string GetBaseURL()
+		{
+			string url = null;
+			url = HttpContext.Current.Request.Url.Scheme + "://" +
+							HttpContext.Current.Request.Url.Authority +
+							HttpContext.Current.Request.ApplicationPath;
+			if ((url.EndsWith("/")))
+			{
+				return url.Remove(url.LastIndexOf("/"));
+			}
+			else
+			{
+				return url;
+			}
+		}
+	}
 }

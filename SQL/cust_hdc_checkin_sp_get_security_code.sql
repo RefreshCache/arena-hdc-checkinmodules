@@ -16,7 +16,7 @@ BEGIN
 
 	SET @AttributeName = 'Family Number'
 	SET @AttributeGroup = 'FE30AC51-5B67-44A5-9D73-A7D3C63A7E9E'
-	SET @FamilyNumber = -1
+	SET @FamilyNumber = 0
 
 	SELECT @FamilyNumber = cpa.int_value
 		FROM core_person_attribute AS cpa
@@ -25,7 +25,7 @@ BEGIN
 		  AND ca.attribute_group_id = (SELECT attribute_group_id FROM core_attribute_group WHERE [guid] = @AttributeGroup)
 		  AND ca.attribute_name = @AttributeName
 
-	IF @FamilyNumber = -1
+	IF @FamilyNumber = 0
 		BEGIN
 			EXEC cust_cccev_ckin_sp_get_security_code @FullCode OUTPUT
 		END

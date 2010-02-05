@@ -45,6 +45,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL", "SQL", "{07A9E1FE-098
 		SQL\cust_hdc_checkin_sp_del_number_board_note.sql = SQL\cust_hdc_checkin_sp_del_number_board_note.sql
 		SQL\cust_hdc_checkin_sp_delete_locationsByTemplateID.sql = SQL\cust_hdc_checkin_sp_delete_locationsByTemplateID.sql
 		SQL\cust_hdc_checkin_sp_family_number_insert.sql = SQL\cust_hdc_checkin_sp_family_number_insert.sql
+		SQL\cust_hdc_checkin_sp_generate_active_occurrences.sql = SQL\cust_hdc_checkin_sp_generate_active_occurrences.sql
 		SQL\cust_hdc_checkin_sp_get_noteByID.sql = SQL\cust_hdc_checkin_sp_get_noteByID.sql
 		SQL\cust_hdc_checkin_sp_get_notesForSystemID.sql = SQL\cust_hdc_checkin_sp_get_notesForSystemID.sql
 		SQL\cust_hdc_checkin_sp_get_notesForUserInfo.sql = SQL\cust_hdc_checkin_sp_get_notesForUserInfo.sql

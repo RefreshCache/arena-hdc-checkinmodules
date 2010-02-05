@@ -35,7 +35,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
     using Arena.Organization;
     using Arena.Computer;
 
-	public partial class ManageAttendance : PortalControl
+	public partial class AttendanceDetails : PortalControl
 	{
         const int kAttendanceAbilityLevelColumn = 5;
 
@@ -52,8 +52,8 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             "SELECT [group_id],[group_name] FROM [core_occurrence_type_group]")]
         public string DefaultAttendanceGroupIDSetting { get { return Setting("DefaultAttendanceGroupID", "", false); } }
 
-		[NumericSetting("DisplayGroupID", "Display group ID to use when posting new numbers to the system.", true)]
-		public int DisplayGroupID { get { return Convert.ToInt32(Setting("DisplayGroupID", "0", true)); } }
+		[NumericSetting("DisplayGroupID", "Display group ID to use when posting new numbers to the system.", false)]
+		public int DisplayGroupID { get { return Convert.ToInt32(Setting("DisplayGroupID", "0", false)); } }
 
 		#endregion
 
@@ -156,7 +156,6 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 					SqlDataReader reader;
 					DataRowView drv = (DataRowView)e.Item.DataItem;
 					Control holder = (PersonDetailPageID == -1 ? e.Item.Controls[1] : e.Item.Controls[0]);
-//					Control holder = e.Item.Controls[0];
 					Control hover = holder.Controls[1];
 					LinkButton lbReprint = (LinkButton)holder.Controls[3];
 					LinkButton lbPost = (LinkButton)holder.Controls[5];
@@ -169,18 +168,21 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 					html = "<span class=\"smallText\"><a href=\"" + csm.GetPostBackClientHyperlink(lbReprint, null) + "\">Reprint</a> labels for " + drv["first_name"] + "<br /></span>";
 					html = html + "<br />";
 
-					//
-					// Check if the security code is already posted.
-					//
-					paramList = new ArrayList();
-					securityNumber = drv["security_code"].ToString().Substring(2);
-					paramList.Add(new SqlParameter("@UserInfo", Convert.ToInt32(drv["occurrence_attendance_id"])));
-					reader = new Arena.DataLayer.Organization.OrganizationData().ExecuteReader("cust_hdc_checkin_sp_get_notesForUserInfo", paramList);
-					if (reader.HasRows)
-						html = html + "<span class=\"smallText\">Remove security number <a href=\"" + csm.GetPostBackClientHyperlink(lbPost, null) + "\">" + securityNumber + "</a><br /></span>";
-					else
-						html = html + "<span class=\"smallText\">Post security number <a href=\"" + csm.GetPostBackClientHyperlink(lbPost, null) + "\">" + securityNumber + "</a><br /></span>";
-					reader.Close();
+					if (DisplayGroupID != 0)
+					{
+						//
+						// Check if the security code is already posted.
+						//
+						paramList = new ArrayList();
+						securityNumber = drv["security_code"].ToString().Substring(2);
+						paramList.Add(new SqlParameter("@UserInfo", Convert.ToInt32(drv["occurrence_attendance_id"])));
+						reader = new Arena.DataLayer.Organization.OrganizationData().ExecuteReader("cust_hdc_checkin_sp_get_notesForUserInfo", paramList);
+						if (reader.HasRows)
+							html = html + "<span class=\"smallText\">Remove security number <a href=\"" + csm.GetPostBackClientHyperlink(lbPost, null) + "\">" + securityNumber + "</a><br /></span>";
+						else
+							html = html + "<span class=\"smallText\">Post security number <a href=\"" + csm.GetPostBackClientHyperlink(lbPost, null) + "\">" + securityNumber + "</a><br /></span>";
+						reader.Close();
+					}
 
 					html = html.Replace("'", "\\'");
 					ScriptManager.RegisterClientScriptBlock(Page, Page.GetType(), "hover" + hover.ClientID, "$(document).ready(function() {popupOverObject('" + hover.ClientID + "', '" + html + "');});", true);

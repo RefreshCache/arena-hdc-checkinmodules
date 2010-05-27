@@ -34,6 +34,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 	using Arena.Core;
     using Arena.Organization;
     using Arena.Computer;
+    using Arena.Marketing;
 
 	public partial class AttendanceDetails : PortalControl
 	{
@@ -52,8 +53,11 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             "SELECT [group_id],[group_name] FROM [core_occurrence_type_group]")]
         public string DefaultAttendanceGroupIDSetting { get { return Setting("DefaultAttendanceGroupID", "", false); } }
 
-		[NumericSetting("DisplayGroupID", "Display group ID to use when posting new numbers to the system.", false)]
-		public int DisplayGroupID { get { return Convert.ToInt32(Setting("DisplayGroupID", "0", false)); } }
+        [NumericSetting("Topic Area", "Enter the topic area ID that will be used for posting numbers to.", true)]
+        public int TopicAreaID { get { return Convert.ToInt32(Setting("TopicAreaID", "-1", true)); } }
+
+        [CampusSetting("Campus", "Select the campus to limit this module to, if you do not enter a campus then all campuses will be used.", false)]
+        public int CampusID { get { return Convert.ToInt32(Setting("CampusID", "-1", false)); } }
 
 		#endregion
 
@@ -153,13 +157,11 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 				if (dgAttendance.EditItemIndex == -1)
 				{
 					ClientScriptManager csm = Page.ClientScript;
-					SqlDataReader reader;
 					DataRowView drv = (DataRowView)e.Item.DataItem;
 					Control holder = (PersonDetailPageID == -1 ? e.Item.Controls[1] : e.Item.Controls[0]);
 					Control hover = holder.Controls[1];
 					LinkButton lbReprint = (LinkButton)holder.Controls[3];
 					LinkButton lbPost = (LinkButton)holder.Controls[5];
-					ArrayList paramList;
 					String html, securityNumber;
 
 					if (PersonDetailPageID != -1)
@@ -168,20 +170,16 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 					html = "<span class=\"smallText\"><a href=\"" + csm.GetPostBackClientHyperlink(lbReprint, null) + "\">Reprint</a> labels for " + drv["first_name"] + "<br /></span>";
 					html = html + "<br />";
 
-					if (DisplayGroupID != 0)
+					if (TopicAreaID != -1)
 					{
 						//
 						// Check if the security code is already posted.
 						//
-						paramList = new ArrayList();
 						securityNumber = drv["security_code"].ToString().Substring(2);
-						paramList.Add(new SqlParameter("@UserInfo", Convert.ToInt32(drv["occurrence_attendance_id"])));
-						reader = new Arena.DataLayer.Organization.OrganizationData().ExecuteReader("cust_hdc_checkin_sp_get_notesForUserInfo", paramList);
-						if (reader.HasRows)
+						if (FindPromotionRequest(Convert.ToInt32(drv["occurrence_attendance_id"])) != -1)
 							html = html + "<span class=\"smallText\">Remove security number <a href=\"" + csm.GetPostBackClientHyperlink(lbPost, null) + "\">" + securityNumber + "</a><br /></span>";
 						else
 							html = html + "<span class=\"smallText\">Post security number <a href=\"" + csm.GetPostBackClientHyperlink(lbPost, null) + "\">" + securityNumber + "</a><br /></span>";
-						reader.Close();
 					}
 
 					html = html.Replace("'", "\\'");
@@ -671,58 +669,47 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 		{
 			OccurrenceAttendance oa = new OccurrenceAttendance(Convert.ToInt32(e.CommandArgument));
 			Arena.DataLayer.Organization.OrganizationData org = new Arena.DataLayer.Organization.OrganizationData();
-			SqlDataReader reader;
-			ArrayList paramList;
 			String securityNumber = oa.SecurityCode.Substring(2);
+            int promotionRequestID;
+
 
 			//
 			// Check if the security code is already posted.
 			//
-			paramList = new ArrayList();
-			paramList.Add(new SqlParameter("@UserInfo", oa.OccurrenceAttendanceID));
-			reader = org.ExecuteReader("cust_hdc_checkin_sp_get_notesForUserInfo", paramList);
-			if (reader.HasRows)
-			{
-				//
-				// Security code exists, we just need to remove it.
-				//
-				while (reader.Read())
-				{
-					ArrayList p = new ArrayList();
-					p.Add(new SqlParameter("@NoteId", reader["note_id"]));
-					org.ExecuteNonQuery("cust_hdc_checkin_sp_del_number_board_note", p);
-				}
-				reader.Close();
-			}
-			else
-			{
-				SqlParameter output;
-				String html;
+            promotionRequestID = FindPromotionRequest(oa.OccurrenceAttendanceID);
+            if (promotionRequestID != -1)
+            {
+                PromotionRequest promotion = new PromotionRequest(promotionRequestID);
 
-				//
-				// Security code is not posted, post a new one.
-				//
-				reader.Close();
+                promotion.Delete();
+            }
+            else
+			{
+                PromotionRequest promotion = new PromotionRequest();
+				String html;
 
 				//
 				// Generate the HTML for this note.
 				//
 				html = String.Format("<p id=\"SecurityCode\">{0}</p>", securityNumber);
 
-				paramList = new ArrayList();
-				paramList.Add(new SqlParameter("@NoteId", -1));
-				paramList.Add(new SqlParameter("@NoteHtml", html));
-				paramList.Add(new SqlParameter("@NoteImage", DBNull.Value));
-				paramList.Add(new SqlParameter("@NoteInfo", DBNull.Value));
-				paramList.Add(new SqlParameter("@SystemId", DBNull.Value));
-				paramList.Add(new SqlParameter("@DisplayGroupId", DisplayGroupID));
-				paramList.Add(new SqlParameter("@UserInfo", oa.OccurrenceAttendanceID));
-				paramList.Add(new SqlParameter("@UserId", CurrentUser.Identity.Name));
-				output = new SqlParameter("@ID", null);
-				output.Direction = ParameterDirection.Output;
-				output.DbType = DbType.Int32;
-				paramList.Add(output);
-				org.ExecuteNonQuery("cust_hdc_checkin_sp_save_number_board_note", paramList);
+                //
+                // Create the new promotion.
+                //
+                if (CampusID != -1)
+                    promotion.Campus = new Campus(CampusID);
+                promotion.ContactName = ArenaContext.Current.Person.FullName;
+                promotion.ContactEmail = "";
+                promotion.ContactPhone = "";
+                promotion.Title = oa.OccurrenceAttendanceID.ToString();
+                promotion.TopicArea = new Lookup(TopicAreaID);
+                promotion.WebSummary = html;
+                promotion.WebPromote = true;
+                promotion.WebStartDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
+                promotion.WebEndDate = promotion.WebStartDate.AddYears(1);
+                promotion.WebApprovedBy = ArenaContext.Current.User.Identity.Name;
+                promotion.WebApprovedDate = DateTime.Now;
+                promotion.Save(ArenaContext.Current.User.Identity.Name);
 			}
 
 			dgAttendance_ReBind(null, null);
@@ -743,5 +730,24 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 				return url;
 			}
 		}
+
+        int FindPromotionRequest(int occurrenceAttendanceID)
+        {
+            PromotionRequestCollection prc = new PromotionRequestCollection();
+
+
+            prc.LoadCurrentWebRequests(TopicAreaID.ToString(), "primary", CampusID, 100, false, -1);
+            foreach (PromotionRequest promotion in prc)
+            {
+                try
+                {
+                    if (Convert.ToInt32(promotion.Title) == occurrenceAttendanceID)
+                        return promotion.PromotionRequestID;
+                }
+                catch { }
+            }
+
+            return -1;
+        }
 	}
 }

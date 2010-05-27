@@ -33,42 +33,43 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 	using Arena.Portal;
 	using Arena.Core;
 	using Arena.Organization;
+    using Arena.Marketing;
 
 	public partial class DisplayBoard : PortalControl
-	{
-		private void Page_Load(object sender, System.EventArgs e)
-		{
-			int noteID;
+    {
+        #region Module Settings
 
-			noteID = GetNextNoteID();
+        [TextSetting("Topic Areas", "Enter a comma separated list of topic areas to be displayed by this module (e.g. \"423,827\")", true)]
+        public string TopicAreaList { get { return Setting("TopicAreaList", "", true); } }
+
+        [CampusSetting("Campus", "Select the campus to limit this module to, if you do not enter a campus then all campuses will be used.", false)]
+        public int CampusID { get { return Convert.ToInt32(Setting("CampusID", "-1", false)); } }
+
+        #endregion
+
+        private void Page_Load(object sender, System.EventArgs e)
+		{
+			int promotionID;
+
+			promotionID = GetNextPromotionID();
 			if (Request.Params["format"] == "html")
-				SendDisplayData(noteID);
+				SendDisplayData(promotionID);
 			if (Request.Params["format"] == "xml")
-				SendDisplayXML(noteID);
+				SendDisplayXML(promotionID);
 		}
 
-		private int GetNextNoteID()
+		private int GetNextPromotionID()
 		{
-			ArrayList idNumbers = new ArrayList();
-			ArrayList paramList = new ArrayList();
+            PromotionRequestCollection prc = new PromotionRequestCollection();
 			int i, lastID = -1;
 
 
-			paramList.Add(new SqlParameter("@SystemId", 1));
-
-			//
-			// Open the data reader
-			//
-			SqlDataReader reader = new Arena.DataLayer.Organization.OrganizationData().ExecuteReader(
-						"cust_hdc_checkin_sp_get_notesForSystemID", paramList);
-
-            while (reader.Read())
-            {
-                idNumbers.Add(reader["note_id"]);
-            }
-			reader.Close();
-
-			//
+            //
+            // Load all promotions for this display.
+            //
+            prc.LoadCurrentWebRequests(TopicAreaList, "both", CampusID, 1000, false, -1);
+            
+            //
 			// Check for the previous ID number.
 			//
 			if (Request.Params["lastID"] != null)
@@ -77,71 +78,58 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 			//
 			// If there were no notes found, return -1.
 			//
-			if (idNumbers.Count == 0)
+			if (prc.Count == 0)
 				return -1;
 
 			//
 			// If this was the first time called, return the first note.
 			//
 			if (lastID == -1)
-				return (int)idNumbers[0];
+				return prc[0].PromotionRequestID;
 
 			//
 			// We have all the ID numbers for this system, snag the next one.
 			//
-			for (i = 0; i < idNumbers.Count; i++)
+			for (i = 0; i < prc.Count; i++)
 			{
-				if ((int)idNumbers[i] > lastID)
-					return (int)idNumbers[i];
+                if (prc[i].PromotionRequestID == lastID)
+                {
+                    if (++i >= prc.Count)
+                        return prc[0].PromotionRequestID;
+                    else
+                        return prc[i].PromotionRequestID;
+                }
 			}
 
-			return (int)idNumbers[0];
+			return prc[0].PromotionRequestID;
 		}
 
 
-		private void SendDisplayData(int noteID)
+		private void SendDisplayData(int promotionID)
 		{
-			ArrayList paramList = new ArrayList();
+            PromotionRequest promotion = new PromotionRequest(promotionID);
 
-
-			paramList.Add(new SqlParameter("@NoteId", noteID));
-
-			//
-			// Open the data reader
-			//
-			SqlDataReader reader = new Arena.DataLayer.Organization.OrganizationData().ExecuteReader(
-						"cust_hdc_checkin_sp_get_noteByID", paramList);
-
-			if (reader.Read() == true)
+            
+            if (promotion.PromotionRequestID != -1)
 			{
-				Response.Write(reader["note_html"]);
+				Response.Write(promotion.WebSummary);
 			}
 
 			//
 			// The End() forces .NET to send the data and close out the connection cleanly.
 			//
-			reader.Close();
 			Response.End();
 		}
 
 
-		private void SendDisplayXML(int noteID)
+		private void SendDisplayXML(int promotionID)
 		{
+            PromotionRequest promotion = new PromotionRequest(promotionID);
 			StringBuilder sb = new StringBuilder();
 			StringWriter writer = new StringWriter(sb);
 			XmlDocument xdoc = new XmlDocument();
 			XmlDeclaration dec;
 			XmlNode root, node;
-			ArrayList paramList = new ArrayList();
-
-
-			paramList.Add(new SqlParameter("@NoteId", noteID));
-
-			//
-			// Open the data reader
-			//
-			SqlDataReader reader = new Arena.DataLayer.Organization.OrganizationData().ExecuteReader(
-						"cust_hdc_checkin_sp_get_noteByID", paramList);
 
 
 			dec = xdoc.CreateXmlDeclaration("1.0", "utf-8", null);
@@ -149,14 +137,14 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
 			root = xdoc.CreateElement("Display");
 
-			if (reader.Read() == true)
+			if (promotion.PromotionRequestID != -1)
 			{
 				node = xdoc.CreateElement("ID");
-				node.AppendChild(xdoc.CreateTextNode(reader["note_id"].ToString()));
+				node.AppendChild(xdoc.CreateTextNode(promotion.PromotionRequestID.ToString()));
 				root.AppendChild(node);
 
 				node = xdoc.CreateElement("Data");
-				node.AppendChild(xdoc.CreateTextNode(reader["note_html"].ToString()));
+				node.AppendChild(xdoc.CreateTextNode(promotion.WebSummary));
 				root.AppendChild(node);
 			}
 			else
@@ -172,7 +160,6 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 			// Send the XML stream. The End() forces .NET to send the data and close
 			// out the connection cleanly.
 			//
-			reader.Close();
 			xdoc.Save(writer);
 			Response.Write(sb.ToString());
 			Response.End();

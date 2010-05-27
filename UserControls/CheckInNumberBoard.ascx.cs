@@ -31,13 +31,17 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
 	using Arena.Portal;
 	using Arena.Core;
+    using Arena.Marketing;
 
 	public partial class CheckInNumberBoard : PortalControl
 	{
 		#region Module Settings
 
-		[NumericSetting("DisplayGroupID", "Display group ID to use when posting new numbers to the system.", true)]
-		public int DisplayGroupID { get { return Convert.ToInt32(Setting("DisplayGroupID", "0", true)); } }
+        [NumericSetting("Topic Area", "Enter the topic area ID that will be used for managing the display board.", true)]
+        public int TopicAreaID { get { return Convert.ToInt32(Setting("TopicAreaID", "-1", true)); } }
+
+        [CampusSetting("Campus", "Select the campus to limit this module to, if you do not enter a campus then all campuses will be used.", false)]
+        public int CampusID { get { return Convert.ToInt32(Setting("CampusID", "-1", false)); } }
 
 		#endregion
 
@@ -50,7 +54,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 				//
 				// Setup the data grid.
 				//
-				dgNote.ItemType = "Note";
+				dgNote.ItemType = "Number";
 				dgNote.ItemBgColor = CurrentPortalPage.Setting("ItemBgColor", string.Empty, false);
 				dgNote.ItemAltBgColor = CurrentPortalPage.Setting("ItemAltBgColor", string.Empty, false);
 				dgNote.ItemMouseOverColor = CurrentPortalPage.Setting("ItemMouseOverColor", string.Empty, false);
@@ -72,12 +76,9 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 				CheckBox cb;
 				Image img;
 
-				hash["note_id"] = drv["note_id"];
+				hash["promotion_id"] = drv["promotion_id"];
 				hash["first_name"] = drv["first_name"];
 				hash["number_string"] = drv["number_string"];
-				hash["system_id"] = drv["system_id"];
-				hash["display_group_id"] = drv["display_group_id"];
-				hash["user_info"] = drv["user_info"];
 				ViewState["editData"] = hash;
 				img = (Image)e.Item.Controls[1].Controls[1];
 				cb = (CheckBox)e.Item.Controls[1].Controls[3];
@@ -115,10 +116,9 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
 		public void dgNote_Update(object sender, DataGridCommandEventArgs e)
 		{
+            PromotionRequest promotion;
 			StringBuilder html;
-			SqlParameter output;
 			Hashtable hash = (Hashtable)ViewState["editData"];
-			ArrayList paramList = new ArrayList();
 			CheckBox cb;
 
 
@@ -128,19 +128,9 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 			if (cb.Checked)
 			    html.AppendFormat("<p id=\"Name\">{0}</p>", hash["first_name"]);
 
-			paramList.Add(new SqlParameter("@NoteId", hash["note_id"]));
-			paramList.Add(new SqlParameter("@NoteHtml", html.ToString()));
-			paramList.Add(new SqlParameter("@NoteImage", DBNull.Value));
-			paramList.Add(new SqlParameter("@NoteInfo", DBNull.Value));
-			paramList.Add(new SqlParameter("@SystemId", hash["system_id"]));
-			paramList.Add(new SqlParameter("@DisplayGroupId", hash["display_group_id"]));
-			paramList.Add(new SqlParameter("@UserInfo", hash["user_info"]));
-			paramList.Add(new SqlParameter("@UserId", CurrentUser.Identity.Name));
-			output = new SqlParameter("@ID", null);
-			output.Direction = ParameterDirection.Output;
-			output.DbType = DbType.Int32;
-			paramList.Add(output);
-			new Arena.DataLayer.Organization.OrganizationData().ExecuteNonQuery("cust_hdc_checkin_sp_save_number_board_note", paramList);
+            promotion = new PromotionRequest(Convert.ToInt32(hash["promotion_id"]));
+            promotion.WebSummary = html.ToString();
+            promotion.Save(ArenaContext.Current.User.Identity.Name);
 
 			dgNote.EditItemIndex = -1;
 			dgNote_ReBind(null, null);
@@ -149,21 +139,21 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 		public void dgNote_Delete(object sender, DataGridCommandEventArgs e)
 		{
 			DataBoundLiteralControl lb = (DataBoundLiteralControl)e.Item.Cells[0].Controls[3].Controls[0];
-			ArrayList paramList = new ArrayList();
+            PromotionRequest promotion = new PromotionRequest(Convert.ToInt32(lb.Text));
 
-			paramList.Add(new SqlParameter("@NoteId", Convert.ToInt32(lb.Text)));
-			new Arena.DataLayer.Organization.OrganizationData().ExecuteNonQuery("cust_hdc_checkin_sp_del_number_board_note", paramList);
+            promotion.Delete();
 
 			dgNote_ReBind(null, null);
 		}
 
 		public void dgNote_ReBind(object sender, EventArgs e)
         {
+            PromotionRequestCollection prc = new PromotionRequestCollection();
 			DataTable dt = new DataTable();
 			ArrayList data = new ArrayList();
 
 
-			dt.Columns.Add("note_id");
+			dt.Columns.Add("promotion_id");
 			dt.Columns.Add("number_string");
 			dt.Columns.Add("created_date");
 			dt.Columns.Add("created_string");
@@ -173,41 +163,33 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 			dt.Columns.Add("sort_name");
 			dt.Columns.Add("location_name");
 			dt.Columns.Add("show_name");
-			dt.Columns.Add("system_id");
-			dt.Columns.Add("display_group_id");
-			dt.Columns.Add("user_info");
 
-			//
-			// Open the data reader to pull a list of all notes in the system.
-			//
-			SqlDataReader reader = new Arena.DataLayer.Organization.OrganizationData().ExecuteReader(
-						"SELECT [nbn].note_id,nbn.user_info,nbn.date_created,nbn.created_by,nbn.note_html,nbn.system_id,nbn.display_group_id" +
-						"	,cp.person_id,cp.first_name,cp.last_name" +
-						"	,ol.location_id,ol.location_name,ol.building_name" +
-						"	,coa.security_code" +
-						"	FROM cust_hdc_checkin_number_board_note AS nbn" +
-						"	LEFT OUTER JOIN core_occurrence_attendance AS coa ON coa.occurrence_attendance_id = nbn.user_info" +
-						"	LEFT OUTER JOIN core_person AS cp ON cp.person_id = coa.person_id" +
-						"	LEFT OUTER JOIN core_occurrence AS co ON co.occurrence_id = coa.occurrence_id" +
-						"	LEFT OUTER JOIN orgn_location AS ol ON ol.location_id = co.location_id" +
-						"	ORDER BY note_id");
-
-			while (reader.Read())
+            prc.LoadCurrentWebRequests(TopicAreaID.ToString(), "primary", CampusID, 1000, false, -1);
+            foreach (PromotionRequest promotion in prc)
 			{
+                OccurrenceAttendance oa;
 				DataRow row = dt.NewRow();
 
-				row["note_id"] = reader["note_id"];
-				row["created_date"] = reader["date_created"];
-				row["created_string"] = ((DateTime)reader["date_created"]).ToShortDateTimeString();
-				row["created_by"] = reader["created_by"];
-				row["first_name"] = reader["first_name"];
-				row["full_name"] = reader["first_name"].ToString() + " " + reader["last_name"].ToString();
-				row["sort_name"] = reader["last_name"].ToString() + ", " + reader["first_name"].ToString();
-				row["location_name"] = reader["building_name"].ToString() + " - " + reader["location_name"];
+                try
+                {
+                    oa = new OccurrenceAttendance(Convert.ToInt32(promotion.Title));
+    				row["first_name"] = oa.Person.FirstName;
+	    			row["full_name"] = oa.Person.FullName;
+		    		row["sort_name"] = oa.Person.LastName + ", " + oa.Person.FirstName;
+                    row["location_name"] = oa.Occurrence.Location;
+                }
+                catch
+                {
+                    row["first_name"] = "";
+                    row["full_name"] = "";
+                    row["sort_name"] = "";
+                    row["location_name"] = "";
+                }
+				row["promotion_id"] = promotion.PromotionRequestID;
+				row["created_date"] = promotion.DateCreated;
+				row["created_string"] = promotion.DateCreated.ToShortDateTimeString();
+				row["created_by"] = promotion.CreatedBy;
 				row["show_name"] = false;
-				row["system_id"] = reader["system_id"];
-				row["display_group_id"] = reader["display_group_id"];
-				row["user_info"] = reader["user_info"];
 
 				//
 				// Pull out the number and status of the first name.
@@ -215,7 +197,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 				try
 				{
 					XmlDocument xdoc = new XmlDocument();
-					xdoc.LoadXml("<body>" + reader["note_html"].ToString() + "</body>");
+					xdoc.LoadXml("<body>" + promotion.WebSummary + "</body>");
 					row["number_string"] = xdoc.ChildNodes[0].ChildNodes[0].ChildNodes[0].Value.ToString();
 					if (xdoc.ChildNodes[0].ChildNodes.Count == 2)
 						row["show_name"] = true;
@@ -226,7 +208,6 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
 				dt.Rows.Add(row);
 			}
-			reader.Close();
 
 			dgNote.DataSource = dt;
             dgNote.DataBind();
@@ -234,28 +215,31 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
 		public void btnAddPost_Click(object sender, EventArgs e)
 		{
+            PromotionRequest promotion = new PromotionRequest();
 			StringBuilder html;
-			SqlParameter output;
-			ArrayList paramList = new ArrayList();
 
 
 			if (tbAddNumber.Text.Length > 0)
 			{
-				html = new StringBuilder(String.Format("<p id=\"SecurityCode\">{0}</p>", tbAddNumber.Text));
+                html = new StringBuilder(String.Format("<p id=\"SecurityCode\">{0}</p>", tbAddNumber.Text));
 
-				paramList.Add(new SqlParameter("@NoteId", -1));
-				paramList.Add(new SqlParameter("@NoteHtml", html.ToString()));
-				paramList.Add(new SqlParameter("@NoteImage", DBNull.Value));
-				paramList.Add(new SqlParameter("@NoteInfo", DBNull.Value));
-				paramList.Add(new SqlParameter("@SystemId", DBNull.Value));
-				paramList.Add(new SqlParameter("@DisplayGroupId", DisplayGroupID));
-				paramList.Add(new SqlParameter("@UserInfo", DBNull.Value));
-				paramList.Add(new SqlParameter("@UserId", CurrentUser.Identity.Name));
-				output = new SqlParameter("@ID", null);
-				output.Direction = ParameterDirection.Output;
-				output.DbType = DbType.Int32;
-				paramList.Add(output);
-				new Arena.DataLayer.Organization.OrganizationData().ExecuteNonQuery("cust_hdc_checkin_sp_save_number_board_note", paramList);
+                //
+                // Create the new promotion.
+                //
+                if (CampusID != -1)
+                    promotion.Campus = new Arena.Organization.Campus(CampusID);
+                promotion.ContactName = ArenaContext.Current.Person.FullName;
+                promotion.ContactEmail = "";
+                promotion.ContactPhone = "";
+                promotion.Title = "Generic Number";
+                promotion.TopicArea = new Lookup(TopicAreaID);
+                promotion.WebSummary = html.ToString();
+                promotion.WebPromote = true;
+                promotion.WebStartDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day);
+                promotion.WebEndDate = promotion.WebStartDate.AddYears(1);
+                promotion.WebApprovedBy = ArenaContext.Current.User.Identity.Name;
+                promotion.WebApprovedDate = DateTime.Now;
+                promotion.Save(ArenaContext.Current.User.Identity.Name);
 			}
 
 			dgNote_ReBind(null, null);

@@ -3,12 +3,12 @@
 
 <asp:Label ID="lbStatus" runat="server"></asp:Label>
 <asp:Panel ID="pnlNoteGrid" Visible="true" runat="server">
-    <Arena:DataGrid ID="dgNote" runat="server" Width="100%" OnReBind="dgNote_ReBind" OnItemDataBound="dgNote_ItemDataBound" OnUpdateCommand="dgNote_Update" OnDeleteCommand="dgNote_Delete" ShowFooter="false" ExportEnabled="false" AddEnabled="false">
+    <Arena:DataGrid id="dgNote" runat="server" width="100%" onrebind="dgNote_ReBind" onitemdatabound="dgNote_ItemDataBound" onupdatecommand="dgNote_Update" ondeletecommand="dgNote_Delete" showfooter="false" exportenabled="false" addenabled="false">
         <Columns>
             <asp:TemplateColumn HeaderText="Number" SortExpression="number" Visible="true" HeaderStyle-Wrap="false" HeaderStyle-VerticalAlign="Top">
                 <ItemTemplate>
                     <asp:Label ID="lbNumber" runat="server"><%# DataBinder.Eval(Container.DataItem, "number_string") %></asp:Label>
-                    <asp:Label ID="lbNoteID" runat="server" style="display: none;"><%# DataBinder.Eval(Container.DataItem, "note_id").ToString() %></asp:Label>
+                    <asp:Label ID="lbPromotionID" runat="server" style="display: none;"><%# DataBinder.Eval(Container.DataItem, "promotion_id").ToString() %></asp:Label>
                 </ItemTemplate>
             </asp:TemplateColumn>
             <asp:TemplateColumn HeaderText="Show Name">

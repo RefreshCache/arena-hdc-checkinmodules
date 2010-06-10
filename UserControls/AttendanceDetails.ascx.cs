@@ -200,7 +200,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     //
                     // If we have a topic area, provide a post/remove security number.
                     //
-					if (TopicAreaID != -1)
+					if (TopicAreaID != -1 && drv["security_code"].ToString().Length > 2)
 					{
 						//
 						// Check if the security code is already posted.

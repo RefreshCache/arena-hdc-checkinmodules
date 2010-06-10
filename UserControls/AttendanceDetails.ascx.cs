@@ -53,8 +53,8 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             "SELECT [group_id],[group_name] FROM [core_occurrence_type_group]")]
         public string DefaultAttendanceGroupIDSetting { get { return Setting("DefaultAttendanceGroupID", "", false); } }
 
-        [NumericSetting("Topic Area", "Enter the topic area ID that will be used for posting numbers to.", true)]
-        public int TopicAreaID { get { return Convert.ToInt32(Setting("TopicAreaID", "-1", true)); } }
+        [NumericSetting("Topic Area", "Enter the topic area ID that will be used for posting numbers to.", false)]
+        public int TopicAreaID { get { return Convert.ToInt32(Setting("TopicAreaID", "-1", false)); } }
 
         [CampusSetting("Campus", "Select the campus to limit this module to, if you do not enter a campus then all campuses will be used.", false)]
         public int CampusID { get { return Convert.ToInt32(Setting("CampusID", "-1", false)); } }
@@ -162,14 +162,44 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 					Control hover = holder.Controls[1];
 					LinkButton lbReprint = (LinkButton)holder.Controls[3];
 					LinkButton lbPost = (LinkButton)holder.Controls[5];
-					String html, securityNumber;
+					String html = "", securityNumber;
+                    Boolean hasCCCEV = false;
 
+
+                    try
+                    {
+                        String arenaBin;
+                        Assembly asm;
+
+                        //
+                        // Find the location of the Arena bin directory and then try to load
+                        // the Cccev assembly file.
+                        //
+                        arenaBin = new Organization().GetType().Assembly.CodeBase.Split(new string[] { "/Arena." }, StringSplitOptions.None)[0];
+                        asm = System.Reflection.Assembly.LoadFrom(arenaBin + "/Arena.Custom.Cccev.CheckIn.dll");
+                        if (asm != null)
+                            hasCCCEV = true;
+                    }
+                    catch { }
+
+                    //
+                    // Add the link to the person.
+                    //
 					if (PersonDetailPageID != -1)
 						((LinkButton)hover).Attributes["href"] = "default.aspx?page=" + PersonDetailPageID.ToString() + "&guid=" + drv["guid"];
 
-					html = "<span class=\"smallText\"><a href=\"" + csm.GetPostBackClientHyperlink(lbReprint, null) + "\">Reprint</a> labels for " + drv["first_name"] + "<br /></span>";
-					html = html + "<br />";
+                    //
+                    // If we have the CCCEV check-in library, provide a re-print button.
+                    //
+                    if (hasCCCEV)
+                    {
+                        html += "<span class=\"smallText\"><a href=\"" + csm.GetPostBackClientHyperlink(lbReprint, null) + "\">Reprint</a> labels for " + drv["first_name"] + "<br /></span>";
+                        html += "<br />";
+                    }
 
+                    //
+                    // If we have a topic area, provide a post/remove security number.
+                    //
 					if (TopicAreaID != -1)
 					{
 						//

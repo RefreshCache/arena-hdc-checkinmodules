@@ -667,7 +667,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 //
                 // Load the 2 methods we need from the Cccev assembly.
                 //
-                paramTypes = new Type[] { typeof(Family), typeof(FamilyMember), typeof(IEnumerable<Occurrence>),
+                paramTypes = new Type[] { typeof(int), typeof(FamilyMember), typeof(IEnumerable<Occurrence>),
                                     typeof(OccurrenceAttendance), typeof(ComputerSystem) };
                 System.Reflection.MethodInfo mi_Print = t_controller.GetMethod("Print", paramTypes);
                 paramTypes = new Type[] { typeof(string) };
@@ -680,10 +680,21 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 cs = (ComputerSystem)mi_GetCurrentKiosk.Invoke(null, new String[] { Request.ServerVariables["REMOTE_ADDR"] });
                 if (cs != null)
                 {
+                    int provider;
+
+                    try
+                    {
+                        provider = Convert.ToInt32(ArenaContext.Current.Organization.Settings["Cccev.PrintLabelDefaultSystemID"]);
+                    }
+                    catch
+                    {
+                        provider = -1;
+                    }
+
                     //
                     // Try to print the person's name tags again.
                     //
-                    object[] parameters = new object[] { member.Family(), member, list, oa, cs };
+                    object[] parameters = new object[] { provider , member, list, oa, cs };
                     status = (Boolean)mi_Print.Invoke(null, parameters);
                 }
             }

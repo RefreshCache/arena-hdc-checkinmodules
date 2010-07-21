@@ -354,8 +354,6 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         public void dgLocation_Close(object sender, CommandEventArgs e)
         {
             StringBuilder sb = new StringBuilder();
-            Location l;
-            int i;
 
 
             //

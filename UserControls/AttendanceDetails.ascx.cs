@@ -397,7 +397,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     idNumber = Convert.ToInt32(Request.Params["locationID"]);
                     if (locationID == idNumber)
                     {
-                        ddlFilterLocation.SelectedIndex = locations.IndexOf(idNumber);
+                        ddlFilterLocation.SelectedIndex = (ddlFilterLocation.Items.Count - 1);
                         ddlFilterLocation_Changed(null, null);
                         searchAvailable = false;
                     }

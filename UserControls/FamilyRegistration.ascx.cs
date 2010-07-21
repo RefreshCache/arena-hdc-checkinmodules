@@ -70,8 +70,8 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         [LookupSetting("New Member Status", "The member status given to new members added through this module.", true, "0b4532db-3188-40f5-b188-e7e6e4448c85")]
         public int NewMemberStatusSetting { get { return Convert.ToInt32(Setting("NewMemberStatus", "", true)); } }
 
-        [CampusSetting("New Member Campus", "The campus a new member is assigned to when added through this module.", true)]
-        public int NewMemberCampusSetting { get { return Convert.ToInt32(Setting("NewMemberCampus", "", true)); } }
+        [CampusSetting("New Member Campus", "The campus a new member is assigned to when added through this module.", false)]
+        public int NewMemberCampusSetting { get { return Convert.ToInt32(Setting("NewMemberCampus", "-1", false)); } }
 
         [BooleanSetting("Field Security", "Enable field level security for this module. This setting behaves the same as the PersonDetails module.", true, false)]
         public bool FieldSecuritySetting { get { return Convert.ToBoolean(Setting("FieldSecurity", "false", true)); } }
@@ -177,6 +177,10 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             // Rebuild the Family Information box.
             //
             tbFamilyName.Text = p.Family().FamilyName;
+            if (tbFamilyName.Text.EndsWith(" Family"))
+            {
+                tbFamilyName.Text = tbFamilyName.Text.Substring(0, tbFamilyName.Text.Length - 7);
+            }
             pa = p.Addresses.PrimaryAddress();
             if (pa != null && pa.AddressID != -1)
             {
@@ -315,7 +319,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 //
                 // Ensure some of the basics are set correctly.
                 //
-                if (fm.Campus == null || fm.Campus.CampusId == -1)
+                if ((fm.Campus == null || fm.Campus.CampusId == -1) && NewMemberCampusSetting != -1)
                     fm.Campus = new Campus(NewMemberCampusSetting);
                 if (fm.MemberStatus == null || fm.MemberStatus.LookupID == -1)
                     fm.MemberStatus = new Lookup(NewMemberStatusSetting);
@@ -579,7 +583,8 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 //
                 // Ensure some of the basics are set correctly.
                 //
-                fm.Campus = new Campus(NewMemberCampusSetting);
+                if (NewMemberCampusSetting != -1)
+                    fm.Campus = new Campus(NewMemberCampusSetting);
                 fm.MemberStatus = new Lookup(NewMemberStatusSetting);
                 fm.RecordStatus = Arena.Enums.RecordStatus.Pending;
 

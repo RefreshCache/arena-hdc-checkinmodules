@@ -251,11 +251,16 @@ function hdc_SaveProgress(element)
     var o = hdc_getElementById(element);
     var s = hdc_getElementById(element + 'Clicked');
 
+    if (Page_ClientValidate("") == false)
+        return false;
+
     if (o && s)
     {
         o.style.display = 'none';
         s.style.display = '';
     }
+
+    return true;
 }
 
 //
@@ -417,7 +422,7 @@ function hdc_propagateFamilyName()
                     <tr>
                         <td align="left" width="100px"><asp:LinkButton ID="btnAddMore" runat="server" CssClass="smallText" Text="Add More"></asp:LinkButton></td>
                         <td align="left" width="100px"><a href="#" id="linkShowFriend" class="smallText" onclick="showFamilyFriend(); return false;" style="display: none;">Add Friend</a></td>
-                        <td align="right"><span id="btnSaveFamilyClicked" class="smallText" style="display: none;">Saving...</span><asp:LinkButton ID="btnSaveFamily" runat="server" CssClass="smallText" Text="Save Family" OnClientClick="hdc_SaveProgress('btnSaveFamily');"></asp:LinkButton></td>
+                        <td align="right"><span id="btnSaveFamilyClicked" class="smallText" style="display: none;">Saving...</span><asp:LinkButton ID="btnSaveFamily" runat="server" CssClass="smallText" Text="Save Family" OnClientClick="return hdc_SaveProgress('btnSaveFamily');"></asp:LinkButton></td>
                     </tr>
                 </table>
             </td>

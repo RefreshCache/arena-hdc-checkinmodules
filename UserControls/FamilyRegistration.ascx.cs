@@ -81,6 +81,11 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             ListSelectionMode.Single)]
         public int FriendRelationshipIDSetting { get { return Convert.ToInt32(Setting("FriendRelationshipID", "-1", false)); } }
 
+        [ListFromSqlSetting("Member Phone Types", "Select the phone types that can be entered on each member record.", false, "",
+            "SELECT cl.lookup_id,cl.lookup_value FROM core_lookup AS cl LEFT JOIN core_lookup_type AS clt ON clt.lookup_type_id = cl.lookup_type_id WHERE clt.[guid] = '847C4CB1-0C3F-4B9C-AA97-DC1A5AFEE26B' AND cl.active = 1 ORDER BY cl.lookup_order",
+            ListSelectionMode.Multiple)]
+        public string MemberPhoneTypes { get { return Setting("MemberPhoneTypes", "", false); } }
+
         #endregion
 
         #region Event Handlers
@@ -1185,8 +1190,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             // Add in all the person attributes.
             //
-            if (PersonAttributeIDsSetting != "")
-                BuildPersonAttributes(cell, index, fm, SetValues);
+            BuildPersonAttributes(cell, index, fm, SetValues);
 
             //
             // Default the row not displayed.
@@ -1304,8 +1308,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             // Add in all the person attributes.
             //
-            if (PersonAttributeIDsSetting != "")
-                BuildPersonAttributes(cell, 9999, null, SetValues);
+            BuildPersonAttributes(cell, 9999, null, SetValues);
 
             //
             // Default the row not displayed.
@@ -1523,16 +1526,68 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             string[] attributeIDs = PersonAttributeIDsSetting.Split(new char[] { ',' });
             int i;
 
+            
+            parent.Controls.Add(table);
+
+            //
+            // Setup person phone numbers.
+            //
+            if (PersonFieldOperationAllowed(PersonFields.Profile_Phones, OperationType.Edit))
+            {
+                BuildPersonPhones(table, index, p, SetValues);
+            }
+
             //
             // Loop through and add each person attribute.
             //
-            parent.Controls.Add(table);
             for (i = 0; i < attributeIDs.Length; i++)
             {
                 BuildPersonAttribute(table, index, p, Convert.ToInt32(attributeIDs[i]), SetValues);
             }
 
             return table;
+        }
+
+        private void BuildPersonPhones(HtmlTable parent, int index, Person p, bool SetValue)
+        {
+            HtmlTableCell cell;
+            HtmlTableRow row;
+            PersonPhone phone;
+            TextBox ptb;
+            Lookup lkup;
+
+
+            if (String.IsNullOrEmpty(MemberPhoneTypes))
+                return;
+
+            foreach (String phoneID in MemberPhoneTypes.Split(','))
+            {
+                lkup = new Lookup(Convert.ToInt32(phoneID));
+                if (p != null)
+                    phone = p.Phones.FindByType(lkup.Guid);
+                else
+                    phone = null;
+
+                row = new HtmlTableRow();
+                parent.Rows.Add(row);
+
+                //
+                // Create the phone title.
+                //
+                TableCellString(row, null, lkup.Value + " Phone");
+
+                //
+                // Create the data entry portion.
+                //
+                cell = new HtmlTableCell();
+                row.Cells.Add(cell);
+                ptb = new TextBox();
+                cell.Controls.Add(ptb);
+                ptb.ID = "MemberPhone_" + index.ToString() + "_" + lkup.LookupID.ToString();
+                ptb.CssClass = "smallText";
+                if (SetValue)
+                    ptb.Text = (phone != null ? phone.Number : "");
+            }
         }
 
         private HtmlTableRow BuildPersonAttribute(HtmlTable parent, int index, Person p, int attributeID, bool SetValue)
@@ -1572,6 +1627,30 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             PersonAttributeEditor attribute;
             string[] attributeIDs = PersonAttributeIDsSetting.Split(new char[] { ',' });
             int i;
+
+            //
+            // Loop through and save each person phone.
+            //
+            if (true && PersonFieldOperationAllowed(PersonFields.Profile_Phones, OperationType.Edit))
+            {
+                foreach (String phoneID in MemberPhoneTypes.Split(','))
+                {
+                    PersonPhone phone = p.Phones.FindByType(Convert.ToInt32(phoneID));
+                    TextBox ptb = (TextBox)parent.FindControl("MemberPhone_" + index.ToString() + "_" + phoneID);
+
+
+                    if (phone == null)
+                    {
+                        phone = new PersonPhone(p.PersonID, new Lookup(Convert.ToInt32(phoneID)), ptb.Text);
+                        p.Phones.Add(phone);
+                    }
+                    else
+                        phone.Number = ptb.Text;
+
+                    p.SavePhones(CurrentPortal.OrganizationID, CurrentUser.Identity.Name);
+                    p.Save(CurrentPortal.OrganizationID, CurrentUser.Identity.Name, true);
+                }
+            }
 
             //
             // Loop through and save each person attribute.

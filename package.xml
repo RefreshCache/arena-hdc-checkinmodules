@@ -1,0 +1,83 @@
+<ArenaPackage version="2009.2.100.1401">
+  <Readme></Readme>
+  <Modules>
+    <Module temp_module_id="-1" module_url="UserControls/Custom/HDC/CheckIn/FamilyRegistration.ascx" module_name="HDC Family Registration" module_desc="Provides a web-based interface to adding a new family into the system. It can be used stand-alone but was designed to be used with the rest of the HDC CheckIn Modules as well as the CCCEV CheckIn system." allows_child_modules="0" image_path="" _source="UserControls/FamilyRegistration.ascx" _source_image="" _system="0" />
+    <Module temp_module_id="-2" module_url="UserControls/Custom/HDC/CheckIn/AttendanceOverview.ascx" module_name="HDC Attendance Overview" module_desc="This module provides an overview of any services that have happened. It is designed for use with check-in where occurrences are created automatically and not ahead of time, though it will work both ways." allows_child_modules="0" image_path="" _source="UserControls/AttendanceOverview.ascx" _source_image="" _system="0" />
+    <Module temp_module_id="-3" module_url="UserControls/Custom/HDC/CheckIn/AttendanceDetails.ascx" module_name="HDC Attendance Details" module_desc="Provides a detailed view of who attended a service." allows_child_modules="0" image_path="" _source="UserControls/AttendanceDetails.ascx" _source_image="" _system="0" />
+    <Module temp_module_id="-4" module_url="UserControls/Custom/HDC/CheckIn/FrequencyLocations.ascx" module_name="HDC Frequency Locations" module_desc="Provides the ability (with accompanying SQL stored procedure) to have automatically generated occurrences be tied to specific locations." allows_child_modules="0" image_path="" _source="UserControls/FrequencyLocations.ascx" _source_image="" _system="0" />
+    <Module temp_module_id="-5" module_url="UserControls/Custom/HDC/CheckIn/CheckInNumberBoard.ascx" module_name="HDC CheckIn Number Board" module_desc="Provides a management screen to the number board system." allows_child_modules="0" image_path="" _source="UserControls/CheckInNumberBoard.ascx" _source_image="" _system="0" />
+    <Module temp_module_id="-6" module_url="UserControls/Custom/HDC/CheckIn/DisplayBoard.ascx" module_name="HDC Display Board" module_desc="Displays childcare numbers as well as other identified items from promotions." allows_child_modules="0" image_path="" _source="UserControls/DisplayBoard.ascx" _source_image="" _system="0" />
+    <Module temp_module_id="-7" module_url="UserControls/PageMenu.ascx" module_name="Page Drop Down Menu" module_desc="" allows_child_modules="0" image_path="" _source="" _source_image="" _system="1" />
+  </Modules>
+  <Pages>
+    <Page temp_page_id="-1" page_order="2147483647" display_in_nav="0" page_name="CheckIn Modules" page_desc="This is the top-level page for the HDC CheckIn Modules." page_settings="" require_ssl="0" guid="f70cda8e-f86b-43ea-875b-d5b8d782e2c8" system_flag="0" friendly_url="" validate_request="1" temp_parent_page_id="0">
+      <Page temp_page_id="-2" page_order="2147483647" display_in_nav="1" page_name="Family Registration" page_desc="This page allows authorized users to update existing family information as well as add new families." page_settings="" require_ssl="0" guid="777e0e2e-4074-4c19-89cd-59ac7cc12a9b" system_flag="0" friendly_url="" validate_request="1" temp_parent_page_id="-1">
+        <ModuleInstance temp_module_instance_id="-1" module_title="Navigation" show_title="1" template_frame_name="Main" template_frame_order="0" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-7" temp_page_id="-2" module_settings="" temp_page_or_template_id="-2" page_instance="1">
+          <Setting name="HomePageID" value="-1" type_id="3" guid="f70cda8e-f86b-43ea-875b-d5b8d782e2c8" />
+          <Setting name="Levels" value="1" type_id="13" />
+          <Setting name="Orientation" value="horizontal" type_id="13" />
+          <Setting name="ReverseHover" value="false" type_id="4" />
+          <Setting name="ShadowEnabled" value="true" type_id="4" />
+          <Setting name="ShowTitlePanel" value="false" type_id="4" />
+          <Setting name="TopGroupItemSpacing" value="5" type_id="2" />
+          <Setting name="MenuCss" value="../UserControls/Custom/HDC/CheckIn/Include/menuStyle.css" type_id="1" />
+        </ModuleInstance>
+        <ModuleInstance temp_module_instance_id="-2" module_title="Family Registration" show_title="0" template_frame_name="Main" template_frame_order="1" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-1" temp_page_id="-2" module_settings="" temp_page_or_template_id="-2" page_instance="1">
+          <Setting name="AllowSearch" value="false" type_id="4" />
+          <Setting name="FieldSecurity" value="false" type_id="4" />
+          <Setting name="NewMemberStatus" value="957" type_id="10" guid="B86CEA1A-3B17-4B8B-AC55-0AC889C5454E" />
+        </ModuleInstance>
+      </Page>
+      <Page temp_page_id="-3" page_order="2147483647" display_in_nav="1" page_name="Attendance Overview" page_desc="This page provides an overview of the attendance of the current (or any selected) service." page_settings="" require_ssl="0" guid="d22370bc-f401-44fa-9bb9-f9b68ba9c9f9" system_flag="0" friendly_url="" validate_request="1" temp_parent_page_id="-1">
+        <ModuleInstance temp_module_instance_id="-3" module_title="Navigation" show_title="1" template_frame_name="Main" template_frame_order="0" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-7" temp_page_id="-3" module_settings="" temp_page_or_template_id="-3" page_instance="1">
+          <Setting name="HomePageID" value="-1" type_id="3" guid="f70cda8e-f86b-43ea-875b-d5b8d782e2c8" />
+          <Setting name="Levels" value="1" type_id="13" />
+          <Setting name="Orientation" value="horizontal" type_id="13" />
+          <Setting name="ReverseHover" value="false" type_id="4" />
+          <Setting name="ShadowEnabled" value="true" type_id="4" />
+          <Setting name="ShowTitlePanel" value="false" type_id="4" />
+          <Setting name="TopGroupItemSpacing" value="5" type_id="2" />
+          <Setting name="MenuCss" value="../UserControls/Custom/HDC/CheckIn/Include/menuStyle.css" type_id="1" />
+        </ModuleInstance>
+        <ModuleInstance temp_module_instance_id="-4" module_title="Overview" show_title="0" template_frame_name="Main" template_frame_order="1" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-2" temp_page_id="-3" module_settings="" temp_page_or_template_id="-3" page_instance="1">
+          <Setting name="AttendanceDetailPageID" value="-4" type_id="3" guid="0d3352b1-4b01-44cc-ae53-ca8d2f917c1d" />
+        </ModuleInstance>
+      </Page>
+      <Page temp_page_id="-4" page_order="2147483647" display_in_nav="1" page_name="Attendance Details" page_desc="This page provides a detailed account of who is in attendance at a specific service." page_settings="" require_ssl="0" guid="0d3352b1-4b01-44cc-ae53-ca8d2f917c1d" system_flag="0" friendly_url="" validate_request="1" temp_parent_page_id="-1">
+        <ModuleInstance temp_module_instance_id="-5" module_title="Navigation" show_title="1" template_frame_name="Main" template_frame_order="0" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-7" temp_page_id="-4" module_settings="" temp_page_or_template_id="-4" page_instance="1">
+          <Setting name="HomePageID" value="-1" type_id="3" guid="f70cda8e-f86b-43ea-875b-d5b8d782e2c8" />
+          <Setting name="Levels" value="1" type_id="13" />
+          <Setting name="Orientation" value="horizontal" type_id="13" />
+          <Setting name="ReverseHover" value="false" type_id="4" />
+          <Setting name="ShadowEnabled" value="true" type_id="4" />
+          <Setting name="ShowTitlePanel" value="false" type_id="4" />
+          <Setting name="TopGroupItemSpacing" value="5" type_id="2" />
+          <Setting name="MenuCss" value="../UserControls/Custom/HDC/CheckIn/Include/menuStyle.css" type_id="1" />
+        </ModuleInstance>
+        <ModuleInstance temp_module_instance_id="-6" module_title="Details" show_title="0" template_frame_name="Main" template_frame_order="1" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-3" temp_page_id="-4" module_settings="" temp_page_or_template_id="-4" page_instance="1" />
+      </Page>
+      <Page temp_page_id="-5" page_order="2147483647" display_in_nav="1" page_name="Manage Number Board" page_desc="Allow authorized users to manually manage the display board." page_settings="" require_ssl="0" guid="4b460da7-9703-419f-ad7a-27c3af6dbdd8" system_flag="0" friendly_url="" validate_request="1" temp_parent_page_id="-1">
+        <ModuleInstance temp_module_instance_id="-7" module_title="Navigation" show_title="1" template_frame_name="Main" template_frame_order="0" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-7" temp_page_id="-5" module_settings="" temp_page_or_template_id="-5" page_instance="1">
+          <Setting name="HomePageID" value="-1" type_id="3" guid="f70cda8e-f86b-43ea-875b-d5b8d782e2c8" />
+          <Setting name="Levels" value="1" type_id="13" />
+          <Setting name="Orientation" value="horizontal" type_id="13" />
+          <Setting name="ReverseHover" value="false" type_id="4" />
+          <Setting name="ShadowEnabled" value="true" type_id="4" />
+          <Setting name="ShowTitlePanel" value="false" type_id="4" />
+          <Setting name="TopGroupItemSpacing" value="5" type_id="2" />
+          <Setting name="MenuCss" value="../UserControls/Custom/HDC/CheckIn/Include/menuStyle.css" type_id="1" />
+        </ModuleInstance>
+        <ModuleInstance temp_module_instance_id="-8" module_title="Manage Number Board" show_title="0" template_frame_name="Main" template_frame_order="1" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-5" temp_page_id="-5" module_settings="" temp_page_or_template_id="-5" page_instance="1" />
+      </Page>
+      <Page temp_page_id="-6" page_order="2147483647" display_in_nav="0" page_name="Display Board" page_desc="This page is used by the display boards to publish check-in numbers." page_settings="" require_ssl="0" guid="e9886ed1-8e85-44ae-a856-d2fa2fa16c9b" system_flag="0" friendly_url="" validate_request="1" temp_parent_page_id="-1">
+        <ModuleInstance temp_module_instance_id="-9" module_title="Display Board" show_title="0" template_frame_name="Main" template_frame_order="0" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-6" temp_page_id="-6" module_settings="" temp_page_or_template_id="-6" page_instance="1" />
+      </Page>
+    </Page>
+  </Pages>
+  <Files>
+    <File path="UserControls/Custom/HDC/CheckIn/Include/transparent.gif" _source="UserControls/Include/transparent.gif" />
+    <File path="UserControls/Custom/HDC/CheckIn/Scripts/hdcHoverPopup.js" _source="UserControls/Scripts/hdcHoverPopup.js" />
+    <File path="bin/Arena.Custom.HDC.CheckIn.dll" _source="Library/bin/Debug/Arena.Custom.HDC.CheckIn.dll" />
+    <File path="UserControls/Custom/HDC/CheckIn/Include/menuStyle.css" _source="UserControls/Include/menuStyle.css" />
+  </Files>
+</ArenaPackage>

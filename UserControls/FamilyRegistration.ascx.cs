@@ -1542,7 +1542,10 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             for (i = 0; i < attributeIDs.Length; i++)
             {
-                BuildPersonAttribute(table, index, p, Convert.ToInt32(attributeIDs[i]), SetValues);
+                if (attributeIDs[i].Length > 0)
+                {
+                    BuildPersonAttribute(table, index, p, Convert.ToInt32(attributeIDs[i]), SetValues);
+                }
             }
 
             return table;

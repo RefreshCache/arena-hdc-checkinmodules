@@ -28,57 +28,6 @@ Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "UserControls", "UserControl
 		VWDPort = "4557"
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SQL", "SQL", "{07A9E1FE-098B-4D59-B025-FFE051BF54DB}"
-	ProjectSection(SolutionItems) = preProject
-		SQL\cust_hdc_checkin_display_group.sql = SQL\cust_hdc_checkin_display_group.sql
-		SQL\cust_hdc_checkin_display_group_system.sql = SQL\cust_hdc_checkin_display_group_system.sql
-		SQL\cust_hdc_checkin_family_number.sql = SQL\cust_hdc_checkin_family_number.sql
-		SQL\cust_hdc_checkin_func_active_occurrenceByLocation.sql = SQL\cust_hdc_checkin_func_active_occurrenceByLocation.sql
-		SQL\cust_hdc_checkin_funct_family_numberByFamily.sql = SQL\cust_hdc_checkin_funct_family_numberByFamily.sql
-		SQL\cust_hdc_checkin_funct_family_numberByPerson.sql = SQL\cust_hdc_checkin_funct_family_numberByPerson.sql
-		SQL\cust_hdc_checkin_funct_number_of_occurrences.sql = SQL\cust_hdc_checkin_funct_number_of_occurrences.sql
-		SQL\cust_hdc_checkin_get_displayGroupsForSystemID.sql = SQL\cust_hdc_checkin_get_displayGroupsForSystemID.sql
-		SQL\cust_hdc_checkin_number_board_note.sql = SQL\cust_hdc_checkin_number_board_note.sql
-		SQL\cust_hdc_checkin_occurrence_type_template_location.sql = SQL\cust_hdc_checkin_occurrence_type_template_location.sql
-		SQL\cust_hdc_checkin_sp_assign_family_number.sql = SQL\cust_hdc_checkin_sp_assign_family_number.sql
-		SQL\cust_hdc_checkin_sp_assign_family_numbers.sql = SQL\cust_hdc_checkin_sp_assign_family_numbers.sql
-		SQL\cust_hdc_checkin_sp_del_number_board_note.sql = SQL\cust_hdc_checkin_sp_del_number_board_note.sql
-		SQL\cust_hdc_checkin_sp_delete_locationsByTemplateID.sql = SQL\cust_hdc_checkin_sp_delete_locationsByTemplateID.sql
-		SQL\cust_hdc_checkin_sp_family_number_insert.sql = SQL\cust_hdc_checkin_sp_family_number_insert.sql
-		SQL\cust_hdc_checkin_sp_generate_active_occurrences.sql = SQL\cust_hdc_checkin_sp_generate_active_occurrences.sql
-		SQL\cust_hdc_checkin_sp_get_noteByID.sql = SQL\cust_hdc_checkin_sp_get_noteByID.sql
-		SQL\cust_hdc_checkin_sp_get_notesForSystemID.sql = SQL\cust_hdc_checkin_sp_get_notesForSystemID.sql
-		SQL\cust_hdc_checkin_sp_get_notesForUserInfo.sql = SQL\cust_hdc_checkin_sp_get_notesForUserInfo.sql
-		SQL\cust_hdc_checkin_sp_get_security_code.sql = SQL\cust_hdc_checkin_sp_get_security_code.sql
-		SQL\cust_hdc_checkin_sp_get_service_overviewByLocation.sql = SQL\cust_hdc_checkin_sp_get_service_overviewByLocation.sql
-		SQL\cust_hdc_checkin_sp_get_service_overviewByOccurrence.sql = SQL\cust_hdc_checkin_sp_get_service_overviewByOccurrence.sql
-		SQL\cust_hdc_checkin_sp_save_number_board_note.sql = SQL\cust_hdc_checkin_sp_save_number_board_note.sql
-		SQL\cust_hdc_checkin_sp_save_template_location.sql = SQL\cust_hdc_checkin_sp_save_template_location.sql
-		SQL\cust_hdc_checkin_sp_templateLocationsByGroupID.sql = SQL\cust_hdc_checkin_sp_templateLocationsByGroupID.sql
-		SQL\cust_hdc_checkin_sp_templateLocationsByTypeID.sql = SQL\cust_hdc_checkin_sp_templateLocationsByTypeID.sql
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{1F968B18-78D6-487E-B184-9775EA973CBA}"
-	ProjectSection(SolutionItems) = preProject
-		Documentation\cn01-AddMoreCount.png = Documentation\cn01-AddMoreCount.png
-		Documentation\cn02-AllowSearching.png = Documentation\cn02-AllowSearching.png
-		Documentation\cn03-CountryCode.png = Documentation\cn03-CountryCode.png
-		Documentation\cn04-EmailFamilyRoles.png = Documentation\cn04-EmailFamilyRoles.png
-		Documentation\cn05-FieldSecurity.png = Documentation\cn05-FieldSecurity.png
-		Documentation\cn06-FriendRelationship.png = Documentation\cn06-FriendRelationship.png
-		Documentation\cn07-GradeFamilyRoles.png = Documentation\cn07-GradeFamilyRoles.png
-		Documentation\cn08-NewFamilySize.png = Documentation\cn08-NewFamilySize.png
-		Documentation\cn09-NewMemberCampus.png = Documentation\cn09-NewMemberCampus.png
-		Documentation\cn10-NewMemberStatus.png = Documentation\cn10-NewMemberStatus.png
-		Documentation\cn11-PersonAttributes.png = Documentation\cn11-PersonAttributes.png
-		Documentation\HDCFamilyRegistration.doc = Documentation\HDCFamilyRegistration.doc
-		Documentation\ui01-SearchingForFamilies.png = Documentation\ui01-SearchingForFamilies.png
-		Documentation\ui02-SearchResults.png = Documentation\ui02-SearchResults.png
-		Documentation\ui03-FamilyInformation.png = Documentation\ui03-FamilyInformation.png
-		Documentation\ui04-PersonAttributes.png = Documentation\ui04-PersonAttributes.png
-		Documentation\ui05-AddFamilyFriend.png = Documentation\ui05-AddFamilyFriend.png
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SubversionScc) = preSolution
 		Svn-Managed = True

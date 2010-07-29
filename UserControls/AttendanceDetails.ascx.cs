@@ -235,7 +235,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             OccurrenceTypeCollection otc;
             OccurrenceCollection oc;
             DateTime bestDate = DateTime.MinValue, now = DateTime.Now;
-            int matchIndex = 0;
+            int matchIndex = 0, selectedValue = -1;
 
 
             //
@@ -244,11 +244,20 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             ddlFilterService.Items.Clear();
 
             //
+            // Determine current selection.
+            //
+            try
+            {
+                selectedValue = Convert.ToInt32(ddlFilterTypeGroup.SelectedValue);
+            }
+            catch { }
+
+            //
             // Add in all valid choices.
             //
-            if (ddlFilterTypeGroup.SelectedValue != "-1")
+            if (selectedValue != -1)
             {
-                otc = new OccurrenceTypeCollection(Convert.ToInt32(ddlFilterTypeGroup.SelectedValue));
+                otc = new OccurrenceTypeCollection(selectedValue);
                 ArrayList dates = new ArrayList();
 
                 foreach (OccurrenceType ot in otc)
@@ -297,13 +306,37 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
         public void ddlFilterService_Changed(object sender, EventArgs e)
         {
-            OccurrenceTypeCollection otc = new OccurrenceTypeCollection(Convert.ToInt32(ddlFilterTypeGroup.SelectedValue));
+            OccurrenceTypeCollection otc;
             OccurrenceCollection oc;
             ArrayList locations = new ArrayList(), occurrences = new ArrayList(), types = new ArrayList();
-            DateTime selectedServiceTime = DateTime.Parse(ddlFilterService.SelectedValue);
+            DateTime selectedServiceTime;
             int idNumber;
             bool searchAvailable = true;
 
+
+            //
+            // Get the list of occurrence types from the selected group.
+            //
+            try
+            {
+                otc = new OccurrenceTypeCollection(Convert.ToInt32(ddlFilterTypeGroup.SelectedValue));
+            }
+            catch
+            {
+                otc = new OccurrenceTypeCollection();
+            }
+
+            //
+            // Get the current selected service time.
+            //
+            try
+            {
+                selectedServiceTime = DateTime.Parse(ddlFilterService.SelectedValue);
+            }
+            catch
+            {
+                selectedServiceTime = DateTime.MinValue;
+            }
 
             foreach (OccurrenceType ot in otc)
             {
@@ -459,6 +492,8 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
         private DataTable GetOccurrenceData()
         {
+            SqlDataReader reader = null;
+
             //
             // Open the data reader
             //
@@ -515,7 +550,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             // Add a filter on attendance type.
             //
-            if (hfFilterTypeGroupID.Value != "-1")
+            if (hfFilterTypeGroupID.Value != "-1" && !String.IsNullOrEmpty(hfFilterTypeGroupID.Value))
             {
                 if (hfFilterTypeID.Value != "-1")
                 {
@@ -540,7 +575,14 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             command.Append(" ORDER BY common_name");
 
-            SqlDataReader reader = new Arena.DataLayer.Organization.OrganizationData().ExecuteReader(command.ToString());
+            try
+            {
+                reader = new Arena.DataLayer.Organization.OrganizationData().ExecuteReader(command.ToString());
+            }
+            catch
+            {
+                throw new Exception(command.ToString());
+            }
 
             return SqlReaderToDataTable(reader);
         }

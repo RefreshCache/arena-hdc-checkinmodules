@@ -190,25 +190,33 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             int totalAttendance = 0;
 
 
-            DataTable dt = GetOccurrenceData();
-            dgOccurrence.DataSource = dt;
-            dgOccurrence.DataBind();
-
-            //
-            // Update the total count.
-            //
-            foreach (DataRow dr in dt.Rows)
+            try
             {
-                totalAttendance += Convert.ToInt32(dr["attendance_count"]);
+                DataTable dt = GetOccurrenceData();
+                dgOccurrence.DataSource = dt;
+                dgOccurrence.DataBind();
+
+                //
+                // Update the total count.
+                //
+                foreach (DataRow dr in dt.Rows)
+                {
+                    totalAttendance += Convert.ToInt32(dr["attendance_count"]);
+                }
             }
+            catch { }
 
             lbTotalAttendance.Text = String.Format("Total attendance this service is {0} people.", totalAttendance);
         }
 
         void dgLocation_ReBind(object sender, EventArgs e)
         {
-            dgLocation.DataSource = GetLocationData();
-            dgLocation.DataBind();
+            try
+            {
+                dgLocation.DataSource = GetLocationData();
+                dgLocation.DataBind();
+            }
+            catch { }
         }
 
         public void dgOccurrence_DataBound(object sender, DataGridItemEventArgs e)
@@ -382,6 +390,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         public void ddlFilterTypeGroup_Changed(object sender, EventArgs e)
         {
             OccurrenceCollection oc;
+            int selectedValue = -1;
 
 
             //
@@ -390,11 +399,20 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             ddlFilterService.Items.Clear();
 
             //
+            // Determine current selection.
+            //
+            try
+            {
+                selectedValue = Convert.ToInt32(ddlFilterTypeGroup.SelectedValue);
+            }
+            catch { }
+
+            //
             // Add in all valid choices.
             //
-            if (ddlFilterTypeGroup.SelectedValue != "-1")
+            if (selectedValue != -1)
             {
-                OccurrenceTypeCollection otc = new OccurrenceTypeCollection(Convert.ToInt32(ddlFilterTypeGroup.SelectedValue));
+                OccurrenceTypeCollection otc = new OccurrenceTypeCollection(selectedValue);
                 ArrayList dates = new ArrayList();
 
                 foreach (OccurrenceType ot in otc)

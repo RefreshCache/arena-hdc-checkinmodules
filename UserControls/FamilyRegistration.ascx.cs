@@ -1742,7 +1742,16 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                             lookups.LoadDropDownList(list);
                         }
                         if (SetValue)
-                            list.SelectedValue = this.IntValue.ToString();
+                        {
+                            try
+                            {
+                                list.SelectedValue = this.IntValue.ToString();
+                            }
+                            catch
+                            {
+                                list.SelectedValue = list.Items[0].Value;
+                            }
+                        }
 
                         return list;
                     }

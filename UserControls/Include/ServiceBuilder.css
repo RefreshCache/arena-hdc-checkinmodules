@@ -1,0 +1,47 @@
+﻿#service { width: 300px; }
+
+.ui-droppable { min-height: 20px; }
+
+.listContainer ol 
+{
+    list-style-type: none;
+    margin: 0px;
+    padding: 10px 10px 10px 10px;
+}
+
+.listContainer ol li
+{
+    padding: 0px 0px 5px 5px;
+}
+
+.header 
+{
+    margin: 0px;
+    padding-left: 5px;
+}
+
+.draggableList
+{
+    list-style-type: none;
+    padding: 0px;
+}
+
+.draggableItem
+{
+    width: 200px;
+    margin-bottom: 2px;
+    height: 1.4em;
+    line-height: 1.4em;
+    list-style-type: none;
+    cursor: pointer;
+}
+
+.activeRoom { margin-bottom: 0px; }
+
+.eraseButton
+{
+    cursor: pointer;
+    float: right;
+}
+
+.activeRoom ol li { margin-bottom: 2px; }

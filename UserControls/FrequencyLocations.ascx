@@ -1,4 +1,4 @@
-<%@ Control Language="C#" AutoEventWireup="true" CodeFile="FrequencyLocations.ascx.cs" Inherits="ArenaWeb.UserControls.Custom.HDC.CheckIn.FrequencyLocations" %>
+<%@ Control Language="C#" AutoEventWireup="true" CodeFile="FrequencyLocations.ascx.cs" CodeBehind="FrequencyLocations.ascx.cs" Inherits="ArenaWeb.UserControls.Custom.HDC.CheckIn.FrequencyLocations" %>
 <%@ Register TagPrefix="Arena" Namespace="Arena.Portal.UI" Assembly="Arena.Portal.UI" %>
 
 <asp:Panel ID="pnlOverview" Visible="true" runat="server">

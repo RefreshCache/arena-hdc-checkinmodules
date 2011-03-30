@@ -1,4 +1,4 @@
-<%@ Control Language="C#" AutoEventWireup="true" CodeFile="CheckInNumberBoard.ascx.cs" Inherits="ArenaWeb.UserControls.Custom.HDC.CheckIn.CheckInNumberBoard" %>
+<%@ Control Language="C#" AutoEventWireup="true" CodeFile="CheckInNumberBoard.ascx.cs" CodeBehind="CheckInNumberBoard.ascx.cs" Inherits="ArenaWeb.UserControls.Custom.HDC.CheckIn.CheckInNumberBoard" %>
 <%@ Register TagPrefix="Arena" Namespace="Arena.Portal.UI" Assembly="Arena.Portal.UI" %>
 
 <asp:Label ID="lbStatus" runat="server"></asp:Label>

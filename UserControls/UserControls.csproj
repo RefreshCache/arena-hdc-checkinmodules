@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>
+    </ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{4D6F4C66-BC97-42D7-9B99-B5D37676C913}</ProjectGuid>
+    <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ArenaWeb.UserControls.Custom.Church.Test</RootNamespace>
+    <AssemblyName>ArenaWeb.UserControls.Custom.Church.Test</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Arena">
+      <HintPath>..\..\..\Arena-SDK-2009.2\Arena.dll</HintPath>
+    </Reference>
+    <Reference Include="Arena.Framework">
+      <HintPath>..\..\..\Arena-SDK-2009.2\Arena.Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="Arena.Portal.UI">
+      <HintPath>..\..\..\Arena-SDK-2009.2\Arena.Portal.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Web.Mobile" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="AttendanceDetails.ascx" />
+    <Content Include="AttendanceOverview.ascx" />
+    <Content Include="CheckInNumberBoard.ascx" />
+    <Content Include="DisplayBoard.ascx" />
+    <Content Include="FamilyRegistration.ascx" />
+    <Content Include="FrequencyLocations.ascx" />
+    <Content Include="Include\ServiceBuilder.css" />
+    <Content Include="Include\menuStyle.css" />
+    <Content Include="Include\transparent.gif" />
+    <Content Include="Scripts\hdcHoverPopup.js" />
+    <Content Include="ServiceBuilder.ascx" />
+    <Content Include="Scripts\ServiceBuilder.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AttendanceDetails.ascx.cs">
+      <DependentUpon>AttendanceDetails.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="AttendanceDetails.ascx.designer.cs">
+      <DependentUpon>AttendanceDetails.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="AttendanceOverview.ascx.cs">
+      <DependentUpon>AttendanceOverview.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="AttendanceOverview.ascx.designer.cs">
+      <DependentUpon>AttendanceOverview.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="CheckInNumberBoard.ascx.cs">
+      <DependentUpon>CheckInNumberBoard.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="CheckInNumberBoard.ascx.designer.cs">
+      <DependentUpon>CheckInNumberBoard.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="DisplayBoard.ascx.cs">
+      <DependentUpon>DisplayBoard.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="DisplayBoard.ascx.designer.cs">
+      <DependentUpon>DisplayBoard.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="FamilyRegistration.ascx.cs">
+      <DependentUpon>FamilyRegistration.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="FamilyRegistration.ascx.designer.cs">
+      <DependentUpon>FamilyRegistration.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="FrequencyLocations.ascx.cs">
+      <DependentUpon>FrequencyLocations.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="FrequencyLocations.ascx.designer.cs">
+      <DependentUpon>FrequencyLocations.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ServiceBuilder.ascx.cs">
+      <DependentUpon>ServiceBuilder.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="ServiceBuilder.ascx.designer.cs">
+      <DependentUpon>ServiceBuilder.ascx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
+        <WebProjectProperties>
+          <UseIIS>False</UseIIS>
+          <AutoAssignPort>True</AutoAssignPort>
+          <DevelopmentServerPort>49858</DevelopmentServerPort>
+          <DevelopmentServerVPath>/</DevelopmentServerVPath>
+          <IISUrl>
+          </IISUrl>
+          <NTLMAuthentication>False</NTLMAuthentication>
+          <UseCustomServer>False</UseCustomServer>
+          <CustomServerUrl>
+          </CustomServerUrl>
+          <SaveServerSettingsInUserFile>False</SaveServerSettingsInUserFile>
+        </WebProjectProperties>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

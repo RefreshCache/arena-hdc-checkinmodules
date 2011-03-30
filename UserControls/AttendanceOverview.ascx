@@ -1,4 +1,4 @@
-<%@ Control Language="C#" AutoEventWireup="true" CodeFile="AttendanceOverview.ascx.cs" Inherits="ArenaWeb.UserControls.Custom.HDC.CheckIn.AttendanceOverview" %>
+<%@ Control Language="C#" AutoEventWireup="true" CodeFile="AttendanceOverview.ascx.cs" CodeBehind="AttendanceOverview.ascx.cs" Inherits="ArenaWeb.UserControls.Custom.HDC.CheckIn.AttendanceOverview" %>
 <%@ Register TagPrefix="Arena" Namespace="Arena.Portal.UI" Assembly="Arena.Portal.UI" %>
 
 <asp:HiddenField ID="hfFilterTypeGroupID" runat="server" Value="-1" />

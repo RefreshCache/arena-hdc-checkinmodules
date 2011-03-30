@@ -1,4 +1,4 @@
-﻿<%@ Control Language="C#" CodeFile="DisplayBoard.ascx.cs" Inherits="ArenaWeb.UserControls.Custom.HDC.CheckIn.DisplayBoard" %>
+﻿<%@ Control Language="C#" CodeFile="DisplayBoard.ascx.cs" CodeBehind="DisplayBoard.ascx.cs" Inherits="ArenaWeb.UserControls.Custom.HDC.CheckIn.DisplayBoard" %>
 
 <style>
 body {

@@ -1,4 +1,4 @@
-<%@ Control Language="C#" AutoEventWireup="true" CodeFile="AttendanceDetails.ascx.cs" Inherits="ArenaWeb.UserControls.Custom.HDC.CheckIn.AttendanceDetails" %>
+<%@ Control Language="C#" AutoEventWireup="true" CodeFile="AttendanceDetails.ascx.cs" CodeBehind="AttendanceDetails.ascx.cs" Inherits="ArenaWeb.UserControls.Custom.HDC.CheckIn.AttendanceDetails" %>
 <%@ Register TagPrefix="Arena" Namespace="Arena.Portal.UI" Assembly="Arena.Portal.UI" %>
 
 <link type="text/css" rel="stylesheet" href="css/personPopup.css" />

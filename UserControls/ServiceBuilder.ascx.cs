@@ -219,8 +219,8 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             occurrence.Description = "";
             occurrence.StartTime = startTime;
             occurrence.EndTime = endTime;
-            occurrence.CheckInStart = (checkinStart != null ? checkinStart : DateTime.Parse("1/1/1900"));
-            occurrence.CheckInEnd = (checkinEnd != null ? checkinEnd : DateTime.Parse("1/1/1900"));
+            occurrence.CheckInStart = checkinStart;
+            occurrence.CheckInEnd = checkinEnd;
             occurrence.MembershipRequired = membershipRequired;
 
             //

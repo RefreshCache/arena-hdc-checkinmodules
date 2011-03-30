@@ -8,11 +8,12 @@
     <Module temp_module_id="-5" module_url="UserControls/Custom/HDC/CheckIn/CheckInNumberBoard.ascx" module_name="HDC CheckIn Number Board" module_desc="Provides a management screen to the number board system." allows_child_modules="0" image_path="" _source="UserControls/CheckInNumberBoard.ascx" _source_image="" _system="0" />
     <Module temp_module_id="-6" module_url="UserControls/Custom/HDC/CheckIn/DisplayBoard.ascx" module_name="HDC Display Board" module_desc="Displays childcare numbers as well as other identified items from promotions." allows_child_modules="0" image_path="" _source="UserControls/DisplayBoard.ascx" _source_image="" _system="0" />
     <Module temp_module_id="-7" module_url="UserControls/PageMenu.ascx" module_name="Page Drop Down Menu" module_desc="" allows_child_modules="0" image_path="" _source="" _source_image="" _system="1" />
+    <Module temp_module_id="-8" module_url="UserControls/Custom/HDC/CheckIn/ServiceBuilder.ascx" module_name="HDC Service Builder" module_desc="This module provides a drag-and-drop method of building up a service. Simply fill in the basic information and then drag and drop locations and attendance types over to design the service layout." allows_child_modules="0" image_path="" _source="UserControls/ServiceBuilder.ascx" _source_image="" _system="0" />
   </Modules>
   <Pages>
     <Page temp_page_id="-1" page_order="2147483647" display_in_nav="0" page_name="CheckIn Modules" page_desc="This is the top-level page for the HDC CheckIn Modules." page_settings="" require_ssl="0" guid="f70cda8e-f86b-43ea-875b-d5b8d782e2c8" system_flag="0" friendly_url="" validate_request="1" temp_parent_page_id="0">
       <Page temp_page_id="-2" page_order="2147483647" display_in_nav="1" page_name="Family Registration" page_desc="This page allows authorized users to update existing family information as well as add new families." page_settings="" require_ssl="0" guid="777e0e2e-4074-4c19-89cd-59ac7cc12a9b" system_flag="0" friendly_url="" validate_request="1" temp_parent_page_id="-1">
-        <ModuleInstance temp_module_instance_id="-1" module_title="Navigation" show_title="1" template_frame_name="Main" template_frame_order="0" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-7" temp_page_id="-2" module_settings="" temp_page_or_template_id="-2" page_instance="1">
+        <ModuleInstance temp_module_instance_id="-1" module_title="Navigation" show_title="1" template_frame_name="Main" template_frame_order="0" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-7" temp_page_id="-2" module_settings="HomePageID=-1;Levels=1;Orientation=horizontal;ReverseHover=false;ShadowEnabled=true;ShowTitlePanel=false;TopGroupItemSpacing=5;MenuCss=../UserControls/Custom/HDC/CheckIn/Include/menuStyle.css" module_instance_guid="7734cb95-aab4-4aee-b16c-22c7ca9b7d6b" temp_page_or_template_id="-2" page_instance="1">
           <Setting name="HomePageID" value="-1" type_id="3" guid="f70cda8e-f86b-43ea-875b-d5b8d782e2c8" />
           <Setting name="Levels" value="1" type_id="13" />
           <Setting name="Orientation" value="horizontal" type_id="13" />
@@ -22,14 +23,14 @@
           <Setting name="TopGroupItemSpacing" value="5" type_id="2" />
           <Setting name="MenuCss" value="../UserControls/Custom/HDC/CheckIn/Include/menuStyle.css" type_id="1" />
         </ModuleInstance>
-        <ModuleInstance temp_module_instance_id="-2" module_title="Family Registration" show_title="0" template_frame_name="Main" template_frame_order="1" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-1" temp_page_id="-2" module_settings="" temp_page_or_template_id="-2" page_instance="1">
+        <ModuleInstance temp_module_instance_id="-2" module_title="Family Registration" show_title="0" template_frame_name="Main" template_frame_order="1" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-1" temp_page_id="-2" module_settings="AllowSearch=false;FieldSecurity=false;NewMemberStatus=957" module_instance_guid="18f4e25b-22de-415e-9291-65da3c4df9e7" temp_page_or_template_id="-2" page_instance="1">
           <Setting name="AllowSearch" value="false" type_id="4" />
           <Setting name="FieldSecurity" value="false" type_id="4" />
           <Setting name="NewMemberStatus" value="957" type_id="10" guid="B86CEA1A-3B17-4B8B-AC55-0AC889C5454E" />
         </ModuleInstance>
       </Page>
       <Page temp_page_id="-3" page_order="2147483647" display_in_nav="1" page_name="Attendance Overview" page_desc="This page provides an overview of the attendance of the current (or any selected) service." page_settings="" require_ssl="0" guid="d22370bc-f401-44fa-9bb9-f9b68ba9c9f9" system_flag="0" friendly_url="" validate_request="1" temp_parent_page_id="-1">
-        <ModuleInstance temp_module_instance_id="-3" module_title="Navigation" show_title="1" template_frame_name="Main" template_frame_order="0" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-7" temp_page_id="-3" module_settings="" temp_page_or_template_id="-3" page_instance="1">
+        <ModuleInstance temp_module_instance_id="-3" module_title="Navigation" show_title="1" template_frame_name="Main" template_frame_order="0" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-7" temp_page_id="-3" module_settings="HomePageID=-1;Levels=1;Orientation=horizontal;ReverseHover=false;ShadowEnabled=true;ShowTitlePanel=false;TopGroupItemSpacing=5;MenuCss=../UserControls/Custom/HDC/CheckIn/Include/menuStyle.css" module_instance_guid="21ad2918-d579-4878-a59b-aabc6da53bea" temp_page_or_template_id="-3" page_instance="1">
           <Setting name="HomePageID" value="-1" type_id="3" guid="f70cda8e-f86b-43ea-875b-d5b8d782e2c8" />
           <Setting name="Levels" value="1" type_id="13" />
           <Setting name="Orientation" value="horizontal" type_id="13" />
@@ -39,12 +40,12 @@
           <Setting name="TopGroupItemSpacing" value="5" type_id="2" />
           <Setting name="MenuCss" value="../UserControls/Custom/HDC/CheckIn/Include/menuStyle.css" type_id="1" />
         </ModuleInstance>
-        <ModuleInstance temp_module_instance_id="-4" module_title="Overview" show_title="0" template_frame_name="Main" template_frame_order="1" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-2" temp_page_id="-3" module_settings="" temp_page_or_template_id="-3" page_instance="1">
+        <ModuleInstance temp_module_instance_id="-4" module_title="Overview" show_title="0" template_frame_name="Main" template_frame_order="1" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-2" temp_page_id="-3" module_settings="AttendanceDetailPageID=-4" module_instance_guid="b6934270-1322-40fb-a57a-e24b71074d44" temp_page_or_template_id="-3" page_instance="1">
           <Setting name="AttendanceDetailPageID" value="-4" type_id="3" guid="0d3352b1-4b01-44cc-ae53-ca8d2f917c1d" />
         </ModuleInstance>
       </Page>
       <Page temp_page_id="-4" page_order="2147483647" display_in_nav="1" page_name="Attendance Details" page_desc="This page provides a detailed account of who is in attendance at a specific service." page_settings="" require_ssl="0" guid="0d3352b1-4b01-44cc-ae53-ca8d2f917c1d" system_flag="0" friendly_url="" validate_request="1" temp_parent_page_id="-1">
-        <ModuleInstance temp_module_instance_id="-5" module_title="Navigation" show_title="1" template_frame_name="Main" template_frame_order="0" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-7" temp_page_id="-4" module_settings="" temp_page_or_template_id="-4" page_instance="1">
+        <ModuleInstance temp_module_instance_id="-5" module_title="Navigation" show_title="1" template_frame_name="Main" template_frame_order="0" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-7" temp_page_id="-4" module_settings="HomePageID=-1;Levels=1;Orientation=horizontal;ReverseHover=false;ShadowEnabled=true;ShowTitlePanel=false;TopGroupItemSpacing=5;MenuCss=../UserControls/Custom/HDC/CheckIn/Include/menuStyle.css" module_instance_guid="930fd60b-8181-4d47-a041-9f579e560f0d" temp_page_or_template_id="-4" page_instance="1">
           <Setting name="HomePageID" value="-1" type_id="3" guid="f70cda8e-f86b-43ea-875b-d5b8d782e2c8" />
           <Setting name="Levels" value="1" type_id="13" />
           <Setting name="Orientation" value="horizontal" type_id="13" />
@@ -54,10 +55,10 @@
           <Setting name="TopGroupItemSpacing" value="5" type_id="2" />
           <Setting name="MenuCss" value="../UserControls/Custom/HDC/CheckIn/Include/menuStyle.css" type_id="1" />
         </ModuleInstance>
-        <ModuleInstance temp_module_instance_id="-6" module_title="Details" show_title="0" template_frame_name="Main" template_frame_order="1" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-3" temp_page_id="-4" module_settings="" temp_page_or_template_id="-4" page_instance="1" />
+        <ModuleInstance temp_module_instance_id="-6" module_title="Details" show_title="0" template_frame_name="Main" template_frame_order="1" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-3" temp_page_id="-4" module_settings="" module_instance_guid="65b0e89d-1caf-4fdb-9a2f-8cccad1aa350" temp_page_or_template_id="-4" page_instance="1" />
       </Page>
       <Page temp_page_id="-5" page_order="2147483647" display_in_nav="1" page_name="Manage Number Board" page_desc="Allow authorized users to manually manage the display board." page_settings="" require_ssl="0" guid="4b460da7-9703-419f-ad7a-27c3af6dbdd8" system_flag="0" friendly_url="" validate_request="1" temp_parent_page_id="-1">
-        <ModuleInstance temp_module_instance_id="-7" module_title="Navigation" show_title="1" template_frame_name="Main" template_frame_order="0" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-7" temp_page_id="-5" module_settings="" temp_page_or_template_id="-5" page_instance="1">
+        <ModuleInstance temp_module_instance_id="-7" module_title="Navigation" show_title="1" template_frame_name="Main" template_frame_order="0" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-7" temp_page_id="-5" module_settings="HomePageID=-1;Levels=1;Orientation=horizontal;ReverseHover=false;ShadowEnabled=true;ShowTitlePanel=false;TopGroupItemSpacing=5;MenuCss=../UserControls/Custom/HDC/CheckIn/Include/menuStyle.css" module_instance_guid="7d775547-26ae-4c40-90b4-81ba7e318c6b" temp_page_or_template_id="-5" page_instance="1">
           <Setting name="HomePageID" value="-1" type_id="3" guid="f70cda8e-f86b-43ea-875b-d5b8d782e2c8" />
           <Setting name="Levels" value="1" type_id="13" />
           <Setting name="Orientation" value="horizontal" type_id="13" />
@@ -67,10 +68,10 @@
           <Setting name="TopGroupItemSpacing" value="5" type_id="2" />
           <Setting name="MenuCss" value="../UserControls/Custom/HDC/CheckIn/Include/menuStyle.css" type_id="1" />
         </ModuleInstance>
-        <ModuleInstance temp_module_instance_id="-8" module_title="Manage Number Board" show_title="0" template_frame_name="Main" template_frame_order="1" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-5" temp_page_id="-5" module_settings="" temp_page_or_template_id="-5" page_instance="1" />
+        <ModuleInstance temp_module_instance_id="-8" module_title="Manage Number Board" show_title="0" template_frame_name="Main" template_frame_order="1" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-5" temp_page_id="-5" module_settings="" module_instance_guid="e00334e6-cf94-49a2-aa31-47c1c9c2c852" temp_page_or_template_id="-5" page_instance="1" />
       </Page>
       <Page temp_page_id="-6" page_order="2147483647" display_in_nav="0" page_name="Display Board" page_desc="This page is used by the display boards to publish check-in numbers." page_settings="" require_ssl="0" guid="e9886ed1-8e85-44ae-a856-d2fa2fa16c9b" system_flag="0" friendly_url="" validate_request="1" temp_parent_page_id="-1">
-        <ModuleInstance temp_module_instance_id="-9" module_title="Display Board" show_title="0" template_frame_name="Main" template_frame_order="0" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-6" temp_page_id="-6" module_settings="" temp_page_or_template_id="-6" page_instance="1" />
+        <ModuleInstance temp_module_instance_id="-9" module_title="Display Board" show_title="0" template_frame_name="Main" template_frame_order="0" module_details="" system_flag="0" mandatory="0" movable="0" description="" image_path="" temp_module_id="-6" temp_page_id="-6" module_settings="" module_instance_guid="dac6a507-8bca-4dc1-9fc6-95bf8142e723" temp_page_or_template_id="-6" page_instance="1" />
       </Page>
     </Page>
   </Pages>
@@ -79,5 +80,15 @@
     <File path="UserControls/Custom/HDC/CheckIn/Scripts/hdcHoverPopup.js" _source="UserControls/Scripts/hdcHoverPopup.js" />
     <File path="bin/Arena.Custom.HDC.CheckIn.dll" _source="Library/bin/Debug/Arena.Custom.HDC.CheckIn.dll" />
     <File path="UserControls/Custom/HDC/CheckIn/Include/menuStyle.css" _source="UserControls/Include/menuStyle.css" />
+    <File path="UserControls/Custom/HDC/CheckIn/Include/ServiceBuilder.css" _source="UserControls/Include/ServiceBuilder.css" />
+    <File path="UserControls/Custom/HDC/CheckIn/Scripts/ServiceBuilder.js" _source="UserControls/Scripts/ServiceBuilder.js" />
   </Files>
+  <Info>
+    <Distributor></Distributor>
+    <PackageName></PackageName>
+    <Version>1.0.0</Version>
+    <Synopsis></Synopsis>
+    <Description></Description>
+  </Info>
+  <Migration _source="" />
 </ArenaPackage>

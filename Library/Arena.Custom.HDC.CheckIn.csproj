@@ -37,15 +37,14 @@
   <ItemGroup>
     <Reference Include="Arena.Custom.Cccev.CheckIn, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\CheckIn\Arena.Custom.Cccev.CheckIn\obj\Debug\Arena.Custom.Cccev.CheckIn.dll</HintPath>
+      <HintPath>..\..\..\CCCEV\CheckIn\Arena.Custom.Cccev\Arena.Custom.Cccev.CheckIn\obj\Debug\Arena.Custom.Cccev.CheckIn.dll</HintPath>
     </Reference>
     <Reference Include="Arena.Custom.Cccev.DataUtils, Version=2009.1.100.22369, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\CheckIn\Arena.Custom.Cccev.DataUtils\obj\Debug\Arena.Custom.Cccev.DataUtils.dll</HintPath>
+      <HintPath>..\..\..\CCCEV\CheckIn\DLLs\Arena.Custom.Cccev.DataUtils.dll</HintPath>
     </Reference>
-    <Reference Include="Arena.Framework, Version=2008.3.100.36613, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Arena ChMS\Arena\bin\Arena.Framework.dll</HintPath>
+    <Reference Include="Arena.Framework">
+      <HintPath>..\..\..\Arena-SDK-2009.2\Arena.Framework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">

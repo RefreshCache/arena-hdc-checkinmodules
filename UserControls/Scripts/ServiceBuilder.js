@@ -36,7 +36,7 @@ function CreateActiveRoom(id, title) {
 // Create a new active attendance type.
 //
 function CreateActiveAttendanceType(id, title, age) {
-    var o = $('<li id="' + id + '" class="ui-state-default"></li>');
+    var o = $('<li id="' + id + '" class="ui-state-default listItem"></li>');
     o.data('age', age);
     o.append('<span>' + title + '</span>');
     $('<span class="eraseButton ui-icon ui-icon-close"></span>').click(function () { removeActiveAttendanceType($(this).parent()); }).appendTo(o);

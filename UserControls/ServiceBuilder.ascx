@@ -48,8 +48,8 @@ var jsonDataField = '<%= jsonData.ClientID %>';
             <td><Arena:ArenaCheckBox ID="cbMembershipRequired" runat="server" Text="" /></td>
         </tr>
         <tr>
-            <td class="smallText" style="width: 200px;">Link To Tag<br />(Leave blank to use the linked profiles/groups of the attendance types)</td>
-            <td><Arena:ProfilePicker ID="ppProfile" runat="server" AllowRemove="true" /></td>
+            <td class="smallText" style="width: 200px;">Link To Tag<br />(Only used when attendance type is not already linked to a tag/group)</td>
+            <td><Arena:ProfilePicker ID="ppProfile" runat="server" AllowRemove="true" /> <Arena:ArenaCheckBox ID="cbUseForAll" runat="server" CssClass="smallText" Text="Use For All" ToolTip="If checked, all occurrences will be linked to this tag, overriding any attendance type setting." /></td>
         </tr>
     </table>
 

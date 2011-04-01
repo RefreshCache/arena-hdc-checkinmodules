@@ -121,6 +121,15 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn {
         protected global::Arena.Portal.UI.ProfilePicker ppProfile;
         
         /// <summary>
+        /// cbUseForAll control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::Arena.Portal.UI.ArenaCheckBox cbUseForAll;
+        
+        /// <summary>
         /// btnCreate control.
         /// </summary>
         /// <remarks>

@@ -36,6 +36,12 @@
     cursor: pointer;
 }
 
+.listItem
+{
+    font-size: 0.7em;
+}
+    
+
 .activeRoom { margin-bottom: 0px; }
 
 .eraseButton

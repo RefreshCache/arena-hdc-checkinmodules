@@ -2,31 +2,31 @@
 
 .ui-droppable { min-height: 20px; }
 
-.listContainer ol 
+.sbListContainer ol 
 {
     list-style-type: none;
     margin: 0px;
     padding: 10px 10px 10px 10px;
 }
 
-.listContainer ol li
+.sbListContainer ol li
 {
     padding: 0px 0px 5px 5px;
 }
 
-.header 
+.sbHeader 
 {
     margin: 0px;
     padding-left: 5px;
 }
 
-.draggableList
+.sbDraggableList
 {
     list-style-type: none;
     padding: 0px;
 }
 
-.draggableItem
+.sbDraggableItem
 {
     width: 200px;
     margin-bottom: 2px;
@@ -36,18 +36,17 @@
     cursor: pointer;
 }
 
-.listItem
+.sbListItem
 {
     font-size: 0.7em;
 }
     
+.sbActiveRoom { margin-bottom: 0px; }
 
-.activeRoom { margin-bottom: 0px; }
-
-.eraseButton
+.sbEraseButton
 {
     cursor: pointer;
     float: right;
 }
 
-.activeRoom ol li { margin-bottom: 2px; }
+.sbActiveRoom ol li { margin-bottom: 2px; }

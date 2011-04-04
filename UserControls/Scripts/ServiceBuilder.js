@@ -24,9 +24,9 @@ $(document).ready(function () {
 // Create new active room.
 //
 function CreateActiveRoom(id, title) {
-    var o = $('<li id="active' + id + '" class="activeRoom"></li>');
-    var header = $('<h3 class="ui-widget-header header"></h3>').text(title).appendTo(o);
-    $('<span class="eraseButton ui-icon ui-icon-close"></span>').click(function () { removeActiveRoom($(this).parent().parent()); }).appendTo(header);
+    var o = $('<li id="active' + id + '" class="sbActiveRoom"></li>');
+    var header = $('<h3 class="ui-widget-header sbHeader"></h3>').text(title).appendTo(o);
+    $('<span class="sbEraseButton ui-icon ui-icon-close"></span>').click(function () { removeActiveRoom($(this).parent().parent()); }).appendTo(header);
     var content = $('<div class="ui-widget-content"><ol></ol></div>').appendTo(o);
 
     return o;
@@ -36,10 +36,10 @@ function CreateActiveRoom(id, title) {
 // Create a new active attendance type.
 //
 function CreateActiveAttendanceType(id, title, age) {
-    var o = $('<li id="' + id + '" class="ui-state-default listItem"></li>');
+    var o = $('<li id="' + id + '" class="ui-state-default sbListItem"></li>');
     o.data('age', age);
     o.append('<span>' + title + '</span>');
-    $('<span class="eraseButton ui-icon ui-icon-close"></span>').click(function () { removeActiveAttendanceType($(this).parent()); }).appendTo(o);
+    $('<span class="sbEraseButton ui-icon ui-icon-close"></span>').click(function () { removeActiveAttendanceType($(this).parent()); }).appendTo(o);
 
     return o;
 }
@@ -48,11 +48,11 @@ function CreateActiveAttendanceType(id, title, age) {
 // Register for droppings.
 //
 $(function () {
-    $(".attendanceType").draggable({ appendTo: 'body', helper: 'clone' });
-    $(".room").draggable({ appendTo: 'body', helper: 'clone' });
+    $(".sbAttendanceType").draggable({ appendTo: 'body', helper: 'clone' });
+    $(".sbRoom").draggable({ appendTo: 'body', helper: 'clone' });
 
     $("#service ol").droppable({
-        accept: '.room',
+        accept: '.sbRoom',
         activeClass: 'ui-state-default',
         hoverClass: 'ui-state-hover',
         drop: function (event, ui) {
@@ -98,7 +98,7 @@ function registerActiveRoom(room, isinit) {
     // Setup the droppable zone.
     //
     $(room).find("ol").droppable({
-        accept: '.attendanceType',
+        accept: '.sbAttendanceType',
         activeClass: 'ui-state-default',
         hoverClass: 'ui-state-hover',
         drop: function (event, ui) {

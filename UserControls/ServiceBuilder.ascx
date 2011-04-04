@@ -63,8 +63,8 @@ var jsonDataField = '<%= jsonData.ClientID %>';
     <table border="0">
         <tr style="vertical-align: top;">
             <td>
-                <div id="attendanceTypes" class="draggableList listContainer">
-                    <h3 class="header ui-widget-header">Attendance Types</h3>
+                <div id="sbAttendanceTypes" class="sbDraggableList sbListContainer">
+                    <h3 class="sbHeader ui-widget-header">Attendance Types</h3>
                     <div class="ui-widget-content">
                         <ol>
                             <asp:DropDownList ID="ddlOccurrenceTypeGroup" runat="server" Width="100%" AutoPostBack="true" OnSelectedIndexChanged="ddlOccurrenceTypeGroup_SelectedIndexChanged" style="margin-bottom: 10px;" />
@@ -74,8 +74,8 @@ var jsonDataField = '<%= jsonData.ClientID %>';
                 </div>
             </td>
             <td>
-                <div id="roomList" class="draggableList listContainer">
-                    <h3 class="header ui-widget-header">Locations</h3>
+                <div id="roomList" class="sbDraggableList sbListContainer">
+                    <h3 class="sbHeader ui-widget-header">Locations</h3>
                     <div class="ui-widget-content">
                         <ol>
                             <asp:Literal ID="ltLocations" runat="server" />
@@ -84,8 +84,8 @@ var jsonDataField = '<%= jsonData.ClientID %>';
                 </div>
             </td>
             <td>
-                <div id="service" class="listContainer">
-                    <h3 class="header ui-widget-header">Build Service</h3>
+                <div id="service" class="sbListContainer">
+                    <h3 class="sbHeader ui-widget-header">Build Service</h3>
                     <div class="ui-widget-content">
                         <ol>
                         </ol>
@@ -97,5 +97,3 @@ var jsonDataField = '<%= jsonData.ClientID %>';
 </asp:Panel>
 
 <asp:HiddenField ID="jsonData" runat="server" Value="{}" />
-
-<asp:Literal ID="debug" runat="server" />

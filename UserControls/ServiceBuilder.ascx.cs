@@ -44,7 +44,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 ltAttendanceTypes.Text = "";
                 foreach (OccurrenceType ot in new OccurrenceTypeCollection(Convert.ToInt32(ddlOccurrenceTypeGroup.SelectedValue)))
                 {
-                    ltAttendanceTypes.Text += String.Format("<li id=\"at-{0}\" class=\"attendanceType draggableItem listItem ui-state-default\" data-age=\"{1}\">{2}</li>",
+                    ltAttendanceTypes.Text += String.Format("<li id=\"at-{0}\" class=\"sbAttendanceType sbDraggableItem sbListItem ui-state-default\" data-age=\"{1}\">{2}</li>",
                         ot.OccurrenceTypeId.ToString(), ot.MinAge.ToString(), ot.TypeName);
                 }
 
@@ -54,7 +54,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 ltLocations.Text = "";
                 foreach (Location l in new LocationCollection(ArenaContext.Current.Organization.OrganizationID))
                 {
-                    ltLocations.Text += String.Format("<li id=\"room-{0}\" class=\"room draggableItem listItem ui-state-default\">{1}</li>",
+                    ltLocations.Text += String.Format("<li id=\"room-{0}\" class=\"sbRoom sbDraggableItem sbListItem ui-state-default\">{1}</li>",
                         l.LocationId.ToString(), l.FullName);
                 }
             }
@@ -73,7 +73,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             ltAttendanceTypes.Text = "";
             foreach (OccurrenceType ot in new OccurrenceTypeCollection(Convert.ToInt32(ddlOccurrenceTypeGroup.SelectedValue)))
             {
-                ltAttendanceTypes.Text += String.Format("<li id=\"at-{0}\" class=\"attendanceType draggableItem ui-state-default\" data-age=\"{1}\">{2}</li>",
+                ltAttendanceTypes.Text += String.Format("<li id=\"at-{0}\" class=\"sbAttendanceType sbDraggableItem sbListItem ui-state-default\" data-age=\"{1}\">{2}</li>",
                     ot.OccurrenceTypeId.ToString(), ot.MinAge.ToString(), ot.TypeName);
             }
         }
@@ -102,7 +102,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             if (String.IsNullOrEmpty(tbName.Text))
             {
-                lbErrors.Text = "Name is a required field and must be supplied.";
+                lbErrors.Text = "Name is a required field and must be supplied.<br />";
             }
 
             //
@@ -111,7 +111,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             if (cbUseForAll.Checked == true && ppProfile.ProfileID == -1)
             {
-                lbErrors.Text = "You must select a tag if you wish to force all occurrences into that Tag.";
+                lbErrors.Text = "You must select a tag if you wish to force all occurrences into that Tag.<br />";
             }
 
             //
@@ -119,7 +119,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             if (data.Keys.Count == 0)
             {
-                lbErrors.Text = "No rooms have been assigned.";
+                lbErrors.Text = "No rooms have been assigned.<br />";
             }
 
             //
@@ -214,6 +214,21 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         }
 
 
+        /// <summary>
+        /// Generate a new occurrence in the database from the values given
+        /// in the parameters.
+        /// </summary>
+        /// <param name="type">The OccurrenceType to use for this occurrence.</param>
+        /// <param name="profileID">The profile to associate the occurrence with if it is not already linked in the occurrence type.</param>
+        /// <param name="forceProfile">Force the occurrence to be associated with the profileID given.</param>
+        /// <param name="name">The name of the occurrence.</param>
+        /// <param name="location">The Location object to use for check-in.</param>
+        /// <param name="startTime">The time the occurrence should start.</param>
+        /// <param name="endTime">The time the occurrence should end.</param>
+        /// <param name="checkinStart">The time that check-in should start.</param>
+        /// <param name="checkinEnd">The time that check-in should end.</param>
+        /// <param name="membershipRequired">If the membership required flag on the occurrence should be set.</param>
+        /// <returns>The ID number of the new occurrence that was generated.</returns>
         private Int32 CreateOccurrence(OccurrenceType type, int profileID, Boolean forceProfile, String name, Location location, DateTime startTime, DateTime endTime, DateTime checkinStart, DateTime checkinEnd, Boolean membershipRequired)
         {
             Occurrence occurrence = null;

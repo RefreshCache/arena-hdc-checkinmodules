@@ -165,10 +165,32 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 foreach (Dictionary<String, Object> at in ats)
                 {
                     OccurrenceType ot = new OccurrenceType(Convert.ToInt32(at["id"].ToString().Substring(3)));
+                    Location loc = null;
 
+                    //
+                    // Make sure the location is valid for this occurrence type.
+                    //
+                    foreach (Location l in ot.Locations)
+                    {
+                        if (l.LocationId == location.LocationId)
+                        {
+                            loc = l;
+                            break;
+                        }
+                    }
+                    if (loc == null)
+                    {
+                        lbErrors.Text += "Attendance type " + ot.TypeName + " is not valid for location " + location.FullName + "<br />";
+                        continue;
+                    }
+
+                    //
+                    // Make sure there is a place will will link the occurrence to.
+                    //
                     if (ot.SyncWithProfile == -1 && ot.SyncWithGroup == -1 && ppProfile.ProfileID == -1)
                     {
-                        lbErrors.Text += "Attendance type " + ot.TypeName + " is not linked to a tag or group and no Link To Tag has been specified.<br />";
+                        lbErrors.Text += "Attendance type " + ot.TypeName + " is not linked to a tag or group and no <i>Link To Tag</i> option has been specified.<br />";
+                        continue;
                     }
 
                     occurrenceData[location].Add(ot);

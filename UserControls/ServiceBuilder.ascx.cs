@@ -89,6 +89,10 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             JavaScriptSerializer serializer = new JavaScriptSerializer();
             Dictionary<String, Object> data = (Dictionary<String,Object>)serializer.DeserializeObject(jsonData.Value);
             List<Int32> occurrenceIDs = new List<int>();
+            DateTime startDateTime = DateTime.Parse(tbStartDate.Text + " " + tbStartTime.Text);
+            DateTime endDateTime = DateTime.Parse(tbEndDate.Text + " " + tbEndTime.Text);
+            DateTime checkinStart = DateTime.Parse(tbCheckInStartDate.Text + " " + tbCheckInStartTime.Text);
+            DateTime checkinEnd = DateTime.Parse(tbCheckInEndDate.Text + " " + tbCheckInEndTime.Text);
 
 
             //
@@ -102,7 +106,19 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             if (String.IsNullOrEmpty(tbName.Text))
             {
-                lbErrors.Text = "Name is a required field and must be supplied.<br />";
+                lbErrors.Text += "Name is a required field and must be supplied.<br />";
+            }
+
+            //
+            // Check if they are trying to end before they start.
+            //
+            if (endDateTime <= startDateTime)
+            {
+                lbErrors.Text += "End-time for service cannot be before start-time.<br />";
+            }
+            if (checkinEnd <= checkinStart)
+            {
+                lbErrors.Text += "End-time for check-in cannot be before start-time.<br />";
             }
 
             //
@@ -111,7 +127,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             if (cbUseForAll.Checked == true && ppProfile.ProfileID == -1)
             {
-                lbErrors.Text = "You must select a tag if you wish to force all occurrences into that Tag.<br />";
+                lbErrors.Text += "You must select a tag if you wish to force all occurrences into that Tag.<br />";
             }
 
             //
@@ -119,7 +135,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             if (data.Keys.Count == 0)
             {
-                lbErrors.Text = "No rooms have been assigned.<br />";
+                lbErrors.Text += "No rooms have been assigned.<br />";
             }
 
             //

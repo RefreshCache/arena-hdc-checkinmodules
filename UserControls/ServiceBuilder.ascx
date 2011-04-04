@@ -38,9 +38,9 @@ var jsonDataField = '<%= jsonData.ClientID %>';
         </tr>
         <tr>
             <td class="smallText">Check-In End:</td>
-            <td><Arena:DateTextBox ID="tbCheckInEndDate" Runat="server" style="width:70px" CssClass="smallText" Required="false" InvalidValueMessage="End Date must be a valid date!" />
+            <td><Arena:DateTextBox ID="tbCheckInEndDate" Runat="server" style="width:70px" CssClass="smallText" Required="true" InvalidValueMessage="End Date must be a valid date!" />
 	            &nbsp;&nbsp;<span class="smallText">Time:</span>
-                <Arena:DateTextBox ID="tbCheckInEndTime" runat="server" style="width:80px" CssClass="smallText" Required="false" Format="time" InvalidValueMessage="End Time must be a valid time (hh:mm am/pm)!"></Arena:DateTextBox>
+                <Arena:DateTextBox ID="tbCheckInEndTime" runat="server" style="width:80px" CssClass="smallText" Required="true" Format="time" InvalidValueMessage="End Time must be a valid time (hh:mm am/pm)!"></Arena:DateTextBox>
             </td>
         </tr>
         <tr>

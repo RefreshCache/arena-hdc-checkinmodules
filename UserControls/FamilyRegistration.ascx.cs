@@ -4,12 +4,6 @@
 *               family at check-in time via a web interface.
 * Created By:	Daniel Hazelbaker, High Desert Church
 * Date Created:	5/19/2009 10:27:43 AM
-*
-* $Workfile: $
-* $Revision: $ 
-* $Header: $
-* 
-* $Log: $
 **********************************************************************/
 
 namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
@@ -86,7 +80,14 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             ListSelectionMode.Multiple)]
         public string MemberPhoneTypes { get { return Setting("MemberPhoneTypes", "", false); } }
 
+        [LookupSetting("Source ID", "If both Source ID and Status ID are specified then users will be able to modify tag membership for existing people.", false, "43DB58F9-C43F-4913-84FF-2E3CEA59C134")]
+        public string SourceLUIDSetting { get { return Setting("SourceLUID", "", false); } }
+
+        [LookupSetting("Status ID", "If both Source ID and Status ID are specified then users will be able to modify tag membership for existing people.", false, "705F785D-36DB-4BF2-9C35-2A7F72A55731")]
+        public string StatusLUIDSetting { get { return Setting("StatusLUID", "", false); } }
+
         #endregion
+
 
         #region Event Handlers
 
@@ -98,14 +99,16 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         /// <param name="e">unused</param>
         private void Page_Load(object sender, System.EventArgs e)
         {
-            //
-            // Enable or disable some basic functionality depending on settings.
-            //
-            pnlFindFamily.Visible = AllowSearchSetting;
-            pnlFamilyFriend.Visible = (FriendRelationshipIDSetting != -1);
+            RegisterScripts();
 
             if (!IsPostBack)
             {
+                //
+                // Enable or disable some basic functionality depending on settings.
+                //
+                pnlFindFamily.Visible = AllowSearchSetting;
+                pnlFamilyFriend.Visible = (FriendRelationshipIDSetting != -1);
+
                 //
                 // Add in the drop down list control for selecting the
                 // country. Also select the default country.
@@ -140,6 +143,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 btnNewFamily_Click(null, null);
         }
 
+
         /// <summary>
         /// User is searching for a family, hide the family panel and show
         /// the results panel.
@@ -152,6 +156,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             pnlFamily.Visible = false;
             hfFamily.Value = "";
         }
+
 
         /// <summary>
         /// A person has been selected, hide the results panel and show
@@ -230,6 +235,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             Build_Page(true);
         }
 
+
         /// <summary>
         /// Okay, we are just going to add in a new family from scratch. Hide
         /// theh find results and show the family panel, and then blank
@@ -266,6 +272,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             phFamilyMembers.Controls.Clear();
             Build_Page(true);
         }
+
 
         void btnSaveFamily_Click(object sender, EventArgs e)
         {
@@ -555,6 +562,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             Build_Page(true);
         }
 
+        
         void btnSaveFriend_Click(object sender, EventArgs e)
         {
             PersonAddress pa;
@@ -758,6 +766,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             }
         }
 
+        
         /// <summary>
         /// Request to add more people to the family. The number of people to
         /// add is taken from the module setting, AddMoreCountSetting.
@@ -780,6 +789,248 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
             BuildExtraRows(true);
         }
+
+
+        /// <summary>
+        /// User is wanting to edit the tag membership for a person. We need to switch
+        /// panels to the membership editor so it appears we are on a whole new page. We do
+        /// this so that when we make "live" edits to the membership of tags it doesn't
+        /// feel weird to the user who still sees the "Save" button on screen behind them.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void btnTagMembership_Click(object sender, EventArgs e)
+        {
+            ArenaImageButton button = (ArenaImageButton)sender;
+            Person p = new Person(Convert.ToInt32(button.CommandArgument));
+
+            
+            //
+            // Switch the panels around for what is visible.
+            //
+            pnlFamily.Visible = false;
+            pnlFamilyFriend.Visible = false;
+            pnlFindFamily.Visible = false;
+            pnlFindResults.Visible = false;
+            pnlTagMembership.Visible = true;
+
+            ltTagMembershipName.Text = p.FullName;
+            lnkAddTags.NavigateUrl = string.Format("javascript:openChooseProfileWindow('',{0},'{1}')", new object[] { Convert.ToInt32(Arena.Enums.ProfileType.Ministry), button.CommandArgument });
+            hfTagMembershipPersonID.Value = button.CommandArgument;
+
+            UpdateTagMembershipProfiles(p);
+        }
+
+
+        /// <summary>
+        /// User is done editing or viewing tag membership for a person. Return to the
+        /// standard family view.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        protected void btnTagMembershipDone_Click(object sender, EventArgs e)
+        {
+            //
+            // Switch the panels around for what is visible.
+            //
+            pnlFamily.Visible = true;
+            pnlFamilyFriend.Visible = (FriendRelationshipIDSetting != -1);
+            pnlFindFamily.Visible = AllowSearchSetting;
+            pnlFindResults.Visible = false;
+            pnlTagMembership.Visible = false;
+        }
+
+
+        /// <summary>
+        /// User has selected some new tags to subscribe the person to. Subscribe them
+        /// to those new tags (assuming they are not a member already) and then re-load
+        /// the list of tags. If the person is already a member but in-active, re-activate
+        /// their membership.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        protected void btnAssignProfile_Click(object sender, EventArgs e)
+        {
+            List<String> ids = hfTagMembershipProfileIDs.Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            ProfileMember pm;
+            Person p = new Person(Convert.ToInt32(hfTagMembershipPersonID.Value));
+
+
+            //
+            // Work through each profile_id specified in the list of profiles.
+            //
+            foreach (String profile_id in ids)
+            {
+                pm = new ProfileMember(Convert.ToInt32(profile_id), p);
+                if (pm.ProfileID == -1)
+                {
+                    //
+                    // Person needs to be added to the tag.
+                    //
+                    pm = new ProfileMember();
+                    pm.ProfileID = Convert.ToInt32(profile_id);
+                    pm.PersonID = p.PersonID;
+                    pm.Source = new Lookup(Int32.Parse(SourceLUIDSetting));
+                    pm.Status = new Lookup(Int32.Parse(StatusLUIDSetting));
+                    pm.DatePending = DateTime.Now;
+                    pm.Save(CurrentUser.Identity.Name);
+
+                    //
+                    // If this is a serving tag then we need to generate a little
+                    // extra information.
+                    //
+                    if (new Profile(Convert.ToInt32(profile_id)).ProfileType == Arena.Enums.ProfileType.Serving)
+                    {
+                        ServingProfile sProfile = new ServingProfile(Convert.ToInt32(profile_id));
+                        ServingProfileMember sMember = new ServingProfileMember(pm.ProfileID, pm.PersonID);
+                        sMember.HoursPerWeek = sProfile.DefaultHoursPerWeek;
+                        sMember.Save(CurrentUser.Identity.Name);
+                    }
+                }
+                else if (pm.Status.Qualifier == "D")
+                {
+                    //
+                    // They are in-active in the tag and need to be re-activated.
+                    //
+                    pm.Status = new Lookup(Int32.Parse(StatusLUIDSetting));
+                }
+            }
+
+            UpdateTagMembershipProfiles(p);
+        }
+
+
+        /// <summary>
+        /// User has clicked to remove a person from a profile. They have already confirmed
+        /// via Javascript.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        void btnTagMembershipDelete_Click(object sender, EventArgs e)
+        {
+            ArenaImageButton button = (ArenaImageButton)sender;
+            Person p = new Person(Convert.ToInt32(hfTagMembershipPersonID.Value));
+
+
+            new ProfileMember(Convert.ToInt32(button.CommandArgument), p).Delete(CurrentUser.Identity.Name);
+
+            UpdateTagMembershipProfiles(p);
+        }
+
+
+        #endregion
+
+
+        #region Misc Methods
+
+        /// <summary>
+        /// Registers all the dynamic javascript we need with the web page.
+        /// </summary>
+        void RegisterScripts()
+        {
+            String script;
+
+            script = String.Format("function assignProfile(profileids, profileStatus, notes, state) {{\r\n\tdocument.getElementById('{0}').value = profileids;\r\n\t$find('mdlProfileMultiSelect').hide();\r\n\t{1};\r\n}}",
+                                            new object[] { hfTagMembershipProfileIDs.ClientID, Page.ClientScript.GetPostBackEventReference(btnAssignProfile, null) });
+            Page.ClientScript.RegisterClientScriptBlock(typeof(String), "assignProfile", script, true);
+        }
+
+
+        /// <summary>
+        /// Populate the list of available grades in the drop down list. I think there is
+        /// an Arena method for this, but I needed to keep it short so I wrote a custom one
+        /// that uses the short name "Kinder" instead of "Kindergarten".
+        /// </summary>
+        /// <param name="list">The DropDownList to populate.</param>
+        private void PopulateGrades(DropDownList list)
+        {
+            list.Items.Clear();
+            list.Items.Add(new ListItem("", "-1"));
+            list.Items.Add(new ListItem("Kinder", "0"));
+            list.Items.Add(new ListItem("1st", "1"));
+            list.Items.Add(new ListItem("2nd", "2"));
+            list.Items.Add(new ListItem("3rd", "3"));
+            list.Items.Add(new ListItem("4th", "4"));
+            list.Items.Add(new ListItem("5th", "5"));
+            list.Items.Add(new ListItem("6th", "6"));
+            list.Items.Add(new ListItem("7th", "7"));
+            list.Items.Add(new ListItem("8th", "8"));
+            list.Items.Add(new ListItem("9th", "9"));
+            list.Items.Add(new ListItem("10th", "10"));
+            list.Items.Add(new ListItem("11th", "11"));
+            list.Items.Add(new ListItem("12th", "12"));
+        }
+
+
+        /// <summary>
+        /// Retrieve the base url (the portion of the URL without the last path
+        /// component, that is the filename and query string) of the current
+        /// web request.
+        /// </summary>
+        /// <returns>Base url as a string.</returns>
+        private string BaseUrl()
+        {
+            StringBuilder url = new StringBuilder();
+            string[] segments;
+            int i;
+
+
+            url.Append(HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority));
+            segments = HttpContext.Current.Request.Url.Segments;
+            for (i = 0; i < segments.Length - 1; i++)
+            {
+                url.Append(segments[i]);
+            }
+
+            return url.ToString();
+        }
+
+
+        /// <summary>
+        /// Determines if the current user has access to perform the
+        /// indicated operation on the person field in question.
+        /// </summary>
+        /// <param name="field">The ID number of the PersonField that the user wants access to.</param>
+        /// <param name="operation">The type of access the user needs to proceed.</param>
+        /// <returns>true/false indicating if the operation is allowed.</returns>
+        private bool PersonFieldOperationAllowed(int field, OperationType operation)
+        {
+            PermissionCollection permissions;
+
+            //
+            // If field security is not enabled then always allow.
+            //
+            if (FieldSecuritySetting == false)
+                return true;
+
+            //
+            // Load the permissions.
+            //
+            permissions = new PermissionCollection(ObjectType.PersonField, field);
+
+            return PermissionsOperationAllowed(permissions, operation);
+        }
+
+
+        /// <summary>
+        /// Checks the PermissionCollection class to determine if the
+        /// indicated operation is allowed for the current user.
+        /// </summary>
+        /// <param name="permissions">The collection of permissions to check. These should be object permissions.</param>
+        /// <param name="operation">The type of access the user needs to proceed.</param>
+        /// <returns>true/false indicating if the operation is allowed.</returns>
+        private bool PermissionsOperationAllowed(PermissionCollection permissions, OperationType operation)
+        {
+            if (FieldSecuritySetting)
+                return permissions.Allowed(operation, CurrentUser);
+            else
+                return true;
+        }
+
+        #endregion
+
+
+        #region Methods for building pages
 
         void Build_Page(bool SetValues)
         {
@@ -1008,10 +1259,18 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             // Make sure all the panels are in the correct state.
             //
             pnlFindResults.Visible = (((tbFindName.Text != "" || tbFindPhone.Text != "") && hfFamily.Value == "") ? true : false);
-            pnlFamily.Visible = (hfFamily.Value == "" ? false : true);
             if (hfFamily.Value != "")
                 Page.ClientScript.RegisterStartupScript(typeof(Page), "hdc_hideSearch", "<script>hideFindFamilyContent();</script>");
+
+            //
+            // Build up the tag membership stuff if we are working in it.
+            //
+            if (hfTagMembershipPersonID.Value != "")
+            {
+                UpdateTagMembershipProfiles(new Person(Convert.ToInt32(hfTagMembershipPersonID.Value)));
+            }
         }
+
 
         /// <summary>
         /// Build the extra family member rows we need.
@@ -1044,6 +1303,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 BuildFamilyMemberRow(null, i, SetValues);
             }
         }
+
 
         private void BuildFamilyMemberRow(FamilyMember fm, int index, bool SetValues)
         {
@@ -1162,16 +1422,37 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             ((TextBox)row.Cells[row.Cells.Count - 1].Controls[0]).Enabled = PersonFieldOperationAllowed(PersonFields.Profile_Emails, OperationType.Edit);
 
             //
+            // Create a cell to hold the image buttons.
+            //
+            cell = new HtmlTableCell();
+            row.Cells.Add(cell);
+
+            //
+            // If this is a completed person record, show the tag membership button.
+            //
+            if (fm != null && fm.PersonID != -1 && !String.IsNullOrEmpty(StatusLUIDSetting) && !String.IsNullOrEmpty(SourceLUIDSetting)) {
+                ArenaImageButton button = new ArenaImageButton();
+
+                cell.Controls.Add(button);
+                button.ImageUrl = "Include/tag_button.png";
+                button.ID = "TagMembership_" + index.ToString();
+                button.CommandArgument = fm.PersonID.ToString();
+                button.Width = 16;
+                button.Height = 16;
+                button.Style.Add("margin-right", "3px");
+                button.Click += new ImageClickEventHandler(btnTagMembership_Click);
+            }
+
+            //
             // Add in an image with a javascript click handler that will toggle
             // the visibility of the extra fields. If you change the image file
             // here you must also update the javascript code.
             //
-            cell = new HtmlTableCell();
-            row.Cells.Add(cell);
             Image img = new Image();
             cell.Controls.Add(img);
             img.ImageUrl = BaseUrl() + "Images/information2.gif";
             img.ID = "imgMemberShowExtra_" + index.ToString();
+            img.Style.Add("cursor", "pointer");
             img.Attributes.Add("onclick", "hdc_toggleExtraFields(this);");
 
             //
@@ -1197,6 +1478,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             row.Style.Add("display", "none");
         }
+
 
         private void BuildFamilyFriend(bool SetValues)
         {
@@ -1316,6 +1598,80 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             row.Style.Add("display", "none");
         }
 
+
+        /// <summary>
+        /// General helper method to update the list of tags the person is a member of.
+        /// </summary>
+        /// <param name="p">The Person whose tag membership we are interested in.</param>
+        void UpdateTagMembershipProfiles(Person p)
+        {
+            phExistingTags.Controls.Clear();
+
+            UpdateTagMembershipProfiles(p, Arena.Enums.ProfileType.Ministry, "Ministry Tags");
+            UpdateTagMembershipProfiles(p, Arena.Enums.ProfileType.Event, "Event Tags");
+            UpdateTagMembershipProfiles(p, Arena.Enums.ProfileType.Serving, "Serving Tags");
+        }
+
+
+        /// <summary>
+        /// Update the list of tags the person is a member of and place them inside
+        /// the phExistingTags placeholder.
+        /// </summary>
+        /// <param name="p">The Person whose tag membership we are interested in knowing.</param>
+        /// <param name="type">The type of tags we want to know about.</param>
+        /// <param name="title">The title to use for this block of tags.</param>
+        void UpdateTagMembershipProfiles(Person p, Arena.Enums.ProfileType type, String title)
+        {
+            ProfileCollection profiles;
+            HtmlTableRow row;
+            HtmlTableCell cell;
+            HtmlTable table;
+
+
+            table = new HtmlTable();
+            phExistingTags.Controls.Add(table);
+            table.Attributes.Add("class", "TagMembershipGroup");
+
+            //
+            // Load the ministry profiles up.
+            //
+            profiles = new ProfileCollection();
+            profiles.LoadMemberDepartmentProfiles(type, -1, p.PersonID, true);
+            profiles.RemoveInactiveProfiles();
+            if (profiles.Count > 0)
+            {
+                row = new HtmlTableRow();
+                table.Rows.Add(row);
+                cell = TableCellString(row, null, title);
+                cell.Attributes.Add("class", "TagMembershipGroupHeader");
+                cell.ColSpan = 2;
+
+                foreach (Profile profile in profiles)
+                {
+                    row = new HtmlTableRow();
+                    table.Rows.Add(row);
+
+                    TableCellString(row, null, profile.Name);
+                    cell = new HtmlTableCell();
+                    row.Cells.Add(cell);
+                    cell.Align = "right";
+
+                    ArenaImageButton button = new ArenaImageButton();
+                    cell.Controls.Add(button);
+                    button.ID = "RemoveProfile_" + profile.ProfileID.ToString();
+                    button.ImageUrl = "~/images/delete.gif";
+                    button.OnClientClick = "if (!confirm('Are you sure you want to delete?')){return false;};";
+                    button.Click += new ImageClickEventHandler(btnTagMembershipDelete_Click);
+                    button.CommandArgument = profile.ProfileID.ToString();
+                }
+            }
+        }
+
+        #endregion
+
+
+        #region HtmlTableCell helper methods
+
         /// <summary>
         /// Generate a HtmlTableCell that contains a single control, a Label
         /// that contains the string value.
@@ -1340,15 +1696,18 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             return cell;
         }
 
+
         private HtmlTableCell TableCellLookupDropDownList(HtmlTableRow row, string controlId, Guid guid, string value, bool required)
         {
             return TableCellLookupDropDownList(row, controlId, new LookupCollection(guid), value, required);
         }
 
+
         private HtmlTableCell TableCellLookupDropDownList(HtmlTableRow row, string controlId, int typeId, string value, bool required)
         {
             return TableCellLookupDropDownList(row, controlId, new LookupCollection(typeId), value, required);
         }
+
 
         private HtmlTableCell TableCellLookupDropDownList(HtmlTableRow row, string controlId, LookupCollection lookups, string value, bool required)
         {
@@ -1370,6 +1729,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
             return cell;
         }
+
 
         private HtmlTableCell TableCellEnumDropDownList(HtmlTableRow row, string controlId, Type eType, string value)
         {
@@ -1399,6 +1759,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             return cell;
         }
 
+
         private HtmlTableCell TableCellTextBox(HtmlTableRow row, string controlId, string value, int width)
         {
             HtmlTableCell cell = new HtmlTableCell();
@@ -1417,6 +1778,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
             return cell;
         }
+
 
         private HtmlTableCell TableCellDateTextBox(HtmlTableRow row, string controlId, string value)
         {
@@ -1438,87 +1800,10 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             return cell;
         }
 
-        private void PopulateGrades(DropDownList list)
-        {
-            list.Items.Clear();
-            list.Items.Add(new ListItem("", "-1"));
-            list.Items.Add(new ListItem("Kinder", "0"));
-            list.Items.Add(new ListItem("1st", "1"));
-            list.Items.Add(new ListItem("2nd", "2"));
-            list.Items.Add(new ListItem("3rd", "3"));
-            list.Items.Add(new ListItem("4th", "4"));
-            list.Items.Add(new ListItem("5th", "5"));
-            list.Items.Add(new ListItem("6th", "6"));
-            list.Items.Add(new ListItem("7th", "7"));
-            list.Items.Add(new ListItem("8th", "8"));
-            list.Items.Add(new ListItem("9th", "9"));
-            list.Items.Add(new ListItem("10th", "10"));
-            list.Items.Add(new ListItem("11th", "11"));
-            list.Items.Add(new ListItem("12th", "12"));
-        }
-
-        /// <summary>
-        /// Retrieve the base url (the portion of the URL without the last path
-        /// component, that is the filename and query string) of the current
-        /// web request.
-        /// </summary>
-        /// <returns>Base url as a string.</returns>
-        private string BaseUrl()
-        {
-            StringBuilder url = new StringBuilder();
-            string[] segments;
-            int i;
+        #endregion
 
 
-            url.Append(HttpContext.Current.Request.Url.GetLeftPart(UriPartial.Authority));
-            segments = HttpContext.Current.Request.Url.Segments;
-            for (i = 0; i < segments.Length - 1; i++)
-            {
-                url.Append(segments[i]);
-            }
-
-            return url.ToString();
-        }
-
-        /// <summary>
-        /// Determines if the current user has access to perform the
-        /// indicated operation on the person field in question.
-        /// </summary>
-        /// <param name="field">The ID number of the PersonField that the user wants access to.</param>
-        /// <param name="operation">The type of access the user needs to proceed.</param>
-        /// <returns>true/false indicating if the operation is allowed.</returns>
-        private bool PersonFieldOperationAllowed(int field, OperationType operation)
-        {
-            PermissionCollection permissions;
-
-            //
-            // If field security is not enabled then always allow.
-            //
-            if (FieldSecuritySetting == false)
-                return true;
-
-            //
-            // Load the permissions.
-            //
-            permissions = new PermissionCollection(ObjectType.PersonField, field);
-
-            return PermissionsOperationAllowed(permissions, operation);
-        }
-
-        /// <summary>
-        /// Checks the PermissionCollection class to determine if the
-        /// indicated operation is allowed for the current user.
-        /// </summary>
-        /// <param name="permissions">The collection of permissions to check. These should be object permissions.</param>
-        /// <param name="operation">The type of access the user needs to proceed.</param>
-        /// <returns>true/false indicating if the operation is allowed.</returns>
-        private bool PermissionsOperationAllowed(PermissionCollection permissions, OperationType operation)
-        {
-            if (FieldSecuritySetting)
-                return permissions.Allowed(operation, CurrentUser);
-            else
-                return true;
-        }
+        #region Person Attributes
 
         private HtmlTable BuildPersonAttributes(Control parent, int index, Person p, bool SetValues)
         {
@@ -1668,6 +1953,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         }
 
         #endregion
+
 
         #region Web Form Code
 

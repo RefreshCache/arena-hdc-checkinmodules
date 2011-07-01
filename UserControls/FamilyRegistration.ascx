@@ -487,6 +487,65 @@ function hdc_propagateFamilyName()
     </table>
 </asp:Panel>
 
+<style>
+    .tagMembershipPanel 
+    {
+        width: 512px;
+        margin-left: auto;
+        margin-right: auto;
+        border: 2px solid grey;
+        background-color: #f0f0ff;
+    }
+    .tagMembershipHeader
+    {
+        padding: 6px 6px 6px 12px;
+        padding-bottom: 12px;
+        background-color: #d0d0e0;
+        text-align: center;
+        font-weight: bold;
+    }
+    .tagMembershipContent
+    {
+        margin: 6px;
+    }
+    .tagMembershipFooter
+    {
+        margin: 6px;
+    }
+    .TagMembershipGroup
+    {
+        width: 100%;
+        border: 0px;
+        padding-left: 12px;
+        margin-top: 4px;
+    }
+    .TagMembershipGroupHeader
+    {
+        padding-left: -12px;
+        font-weight: bold;
+    }
+</style>
+
+<asp:Panel ID="pnlTagMembership" runat="server" Visible="false">
+    <div class="tagMembershipPanel">
+        <asp:HiddenField ID="hfTagMembershipPersonID" runat="server" />
+        <asp:HiddenField ID="hfTagMembershipProfileIDs" runat="server" />
+        <asp:Button ID="btnAssignProfile" runat="server" Style="visibility: hidden; display: none;" CausesValidation="false" OnClick="btnAssignProfile_Click" Text="Assign Profile" />
+        <Arena:ModalPopupIFrame ID="mdlProfileMultiSelect" runat="server" BehaviorID="mdlProfileMultiSelect"
+            Title="Tag Browser" Url="ProfileMultiSelect.aspx?callback=assignProfile&SelectedProfileID=#profileIDs#&profileType=#profileType#&state=#state#&showStatusNotes=false"
+            JSFunctionName="openChooseProfileWindow(profileIDs, profileType, state)" Width="325" Height="480" />
+
+        <div class="tagMembershipHeader">Tag Membership for <asp:Literal ID="ltTagMembershipName" runat="server" /></div>
+        <div class="tagMembershipContent">
+            <asp:Placeholder ID="phExistingTags" runat="server" />
+        </div>
+        <div class="tagMembershipFooter">
+            <span><asp:HyperLink ID="lnkAddTags" runat="server" Text="Add Tags..." Style="font-size: small;" /></span>
+            <span style="float: right;"><asp:LinkButton ID="lnkDone" runat="server" Text="Done" Style="font-size: small;" OnClick="btnTagMembershipDone_Click" /></span>
+        </div>
+    </div>
+</asp:Panel>
+
 <script type="text/javascript" language="javascript">
 var obj, family, allowFriend;
 
@@ -499,4 +558,8 @@ family = hdc_getElementById('hfFamily');
 allowFriend = hdc_getElementById('hfAllowFriend');
 if (obj && family.value != '' && family.value != '-1' && allowFriend.value == '1')
     obj.style.display = '';
+
+function closeProfileMultiSelect() {
+    $find('mdlProfileMultiSelect').hide();
+}
 </script>

@@ -10,7 +10,7 @@
     <ProjectTypeGuids>{349c5851-65df-11da-9384-00065b846f21};{fae04ec0-301f-11d3-bf4b-00c04f79efbc}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ArenaWeb.UserControls.Custom.Church.Test</RootNamespace>
+    <RootNamespace>ArenaWeb.UserControls.Custom.HDC.CheckIn</RootNamespace>
     <AssemblyName>ArenaWeb.UserControls.Custom.Church.Test</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
   </PropertyGroup>
@@ -32,13 +32,19 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Arena">
+    <Reference Include="AjaxControlToolkit">
+      <HintPath>..\..\..\..\..\..\..\..\Arena\Stable\Arena\bin\AjaxControlToolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="Arena, Version=2009.2.100.35701, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\Arena-SDK-2009.2\Arena.dll</HintPath>
     </Reference>
-    <Reference Include="Arena.Framework">
+    <Reference Include="Arena.Framework, Version=2009.2.100.35701, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\Arena-SDK-2009.2\Arena.Framework.dll</HintPath>
     </Reference>
-    <Reference Include="Arena.Portal.UI">
+    <Reference Include="Arena.Portal.UI, Version=2009.2.100.35701, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\Arena-SDK-2009.2\Arena.Portal.UI.dll</HintPath>
     </Reference>
     <Reference Include="System" />
@@ -64,6 +70,7 @@
     <Content Include="FrequencyLocations.ascx" />
     <Content Include="Include\ServiceBuilder.css" />
     <Content Include="Include\menuStyle.css" />
+    <Content Include="Include\tag_button.png" />
     <Content Include="Include\transparent.gif" />
     <Content Include="Scripts\hdcHoverPopup.js" />
     <Content Include="ServiceBuilder.ascx" />

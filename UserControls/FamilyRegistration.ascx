@@ -1,6 +1,8 @@
 <%@ Control Language="C#" AutoEventWireup="true" CodeFile="FamilyRegistration.ascx.cs" CodeBehind="FamilyRegistration.ascx.cs" Inherits="ArenaWeb.UserControls.Custom.HDC.CheckIn.FamilyRegistration" %>
 <%@ Register TagPrefix="Arena" Namespace="Arena.Portal.UI" Assembly="Arena.Portal.UI" %>
 
+<link type="text/css" href="UserControls/Custom/HDC/CheckIn/Include/FamilyRegistration.css" rel="Stylesheet" />	
+
 <asp:HiddenField ID="hfGradeRoleIDs" runat="server" />
 <asp:HiddenField ID="hfEmailRoleIDs" runat="server" />
 <asp:HiddenField ID="hfFamily" runat="server" />
@@ -486,45 +488,6 @@ function hdc_propagateFamilyName()
         </tr>
     </table>
 </asp:Panel>
-
-<style>
-    .tagMembershipPanel 
-    {
-        width: 512px;
-        margin-left: auto;
-        margin-right: auto;
-        border: 2px solid grey;
-        background-color: #f0f0ff;
-    }
-    .tagMembershipHeader
-    {
-        padding: 6px 6px 6px 12px;
-        padding-bottom: 12px;
-        background-color: #d0d0e0;
-        text-align: center;
-        font-weight: bold;
-    }
-    .tagMembershipContent
-    {
-        margin: 6px;
-    }
-    .tagMembershipFooter
-    {
-        margin: 6px;
-    }
-    .TagMembershipGroup
-    {
-        width: 100%;
-        border: 0px;
-        padding-left: 12px;
-        margin-top: 4px;
-    }
-    .TagMembershipGroupHeader
-    {
-        padding-left: -12px;
-        font-weight: bold;
-    }
-</style>
 
 <asp:Panel ID="pnlTagMembership" runat="server" Visible="false">
     <div class="tagMembershipPanel">

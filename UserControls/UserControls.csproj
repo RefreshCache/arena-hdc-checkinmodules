@@ -68,6 +68,7 @@
     <Content Include="DisplayBoard.ascx" />
     <Content Include="FamilyRegistration.ascx" />
     <Content Include="FrequencyLocations.ascx" />
+    <Content Include="Include\FamilyRegistration.css" />
     <Content Include="Include\ServiceBuilder.css" />
     <Content Include="Include\menuStyle.css" />
     <Content Include="Include\tag_button.png" />

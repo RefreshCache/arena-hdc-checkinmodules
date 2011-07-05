@@ -1808,7 +1808,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         private HtmlTable BuildPersonAttributes(Control parent, int index, Person p, bool SetValues)
         {
             HtmlTable table = new HtmlTable();
-            string[] attributeIDs = PersonAttributeIDsSetting.Split(new char[] { ',' });
+            string[] attributeIDs = PersonAttributeIDsSetting.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             int i;
 
             
@@ -1913,7 +1913,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         private void SavePersonAttributes(int index, Person p, Control parent)
         {
             PersonAttributeEditor attribute;
-            string[] attributeIDs = PersonAttributeIDsSetting.Split(new char[] { ',' });
+            string[] attributeIDs = PersonAttributeIDsSetting.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
             int i;
 
             //

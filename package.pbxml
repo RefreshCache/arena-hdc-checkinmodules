@@ -82,6 +82,8 @@
     <File path="UserControls/Custom/HDC/CheckIn/Include/menuStyle.css" _source="UserControls/Include/menuStyle.css" />
     <File path="UserControls/Custom/HDC/CheckIn/Include/ServiceBuilder.css" _source="UserControls/Include/ServiceBuilder.css" />
     <File path="UserControls/Custom/HDC/CheckIn/Scripts/ServiceBuilder.js" _source="UserControls/Scripts/ServiceBuilder.js" />
+    <File path="UserControls/Custom/HDC/CheckIn/Include/FamilyRegistration.css" _source="UserControls/Include/FamilyRegistration.css" />
+    <File path="UserControls/Custom/HDC/CheckIn/Include/tag_button.png" _source="UserControls/Include/tag_button.png" />
   </Files>
   <Info>
     <Distributor></Distributor>

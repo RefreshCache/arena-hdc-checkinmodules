@@ -66,9 +66,9 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         protected void Page_Init(object sender, EventArgs e)
         {
             dgAttendance.ReBind += new Arena.Portal.UI.DataGridReBindEventHandler(dgAttendance_ReBind);
-			ScriptManager.RegisterClientScriptInclude(Page, Page.GetType(), "jquery.min", "include/scripts/jquery.1.3.2.min.js");
-			ScriptManager.RegisterClientScriptInclude(Page, Page.GetType(), "jquery.hoverIntent", "include/scripts/jquery.hoverIntent.min.js");
-			ScriptManager.RegisterClientScriptInclude(Page, Page.GetType(), "hdcHoverPopup", AppRelativeTemplateSourceDirectory.Remove(0, 2) + "Scripts/hdcHoverPopup.js");
+            BasePage.AddJavascriptInclude(Page, BasePage.JQUERY_INCLUDE);
+            BasePage.AddJavascriptInclude(Page, "include/scripts/jquery.hoverIntent.min.js");
+            BasePage.AddJavascriptInclude(Page, AppRelativeTemplateSourceDirectory.Remove(0, 2) + "Scripts/hdcHoverPopup.js");
 		}
 
 		private void Page_Load(object sender, System.EventArgs e)

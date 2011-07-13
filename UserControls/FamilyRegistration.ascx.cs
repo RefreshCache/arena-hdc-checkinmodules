@@ -1848,7 +1848,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             if (String.IsNullOrEmpty(MemberPhoneTypes))
                 return;
 
-            foreach (String phoneID in MemberPhoneTypes.Split(','))
+            foreach (String phoneID in MemberPhoneTypes.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 lkup = new Lookup(Convert.ToInt32(phoneID));
                 if (p != null)
@@ -1921,7 +1921,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             if (true && PersonFieldOperationAllowed(PersonFields.Profile_Phones, OperationType.Edit))
             {
-                foreach (String phoneID in MemberPhoneTypes.Split(','))
+                foreach (String phoneID in MemberPhoneTypes.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
                 {
                     PersonPhone phone = p.Phones.FindByType(Convert.ToInt32(phoneID));
                     TextBox ptb = (TextBox)parent.FindControl("MemberPhone_" + index.ToString() + "_" + phoneID);

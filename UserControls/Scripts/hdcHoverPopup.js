@@ -36,7 +36,7 @@ var container = $('<div id="personPopupContainer">'
     + '</table>'
     + '</div>');
 
-$('body').append(container);
+$(document).ready(function () { $('body').append(container); });
 
 function popupOverObject(objectID, html)
 {
@@ -87,12 +87,13 @@ function popupOver(eventObject)
     }
 }
 
-// Allow mouse over of details without hiding details
-$('#personPopupContainer').mouseover(function()
-{
-    if (hideTimer)
-        clearTimeout(hideTimer);
-});
+$(document).ready(function () {
+    // Allow mouse over of details without hiding details
+    $('#personPopupContainer').mouseover(function () {
+        if (hideTimer)
+            clearTimeout(hideTimer);
+    });
 
-// Hide after mouseout
-$('#personPopupContainer').mouseout(hideFunction);
+    // Hide after mouseout
+    $('#personPopupContainer').mouseout(hideFunction);
+});

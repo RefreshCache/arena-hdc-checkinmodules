@@ -59,6 +59,9 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
         [CampusSetting("Campus", "Select the campus to limit this module to, if you do not enter a campus then all campuses will be used.", false)]
         public int CampusID { get { return Convert.ToInt32(Setting("CampusID", "-1", false)); } }
 
+        [LookupSetting("Label Print Provider", "The print provider from the CCCEV Check-in System to use when re-printing labels. If CCCEV Check-in is not installed you will get an exception when trying to select a print provider.", false, "420221aa-8c79-435b-b884-fa3f6855d0d1")]
+        public int LabelPrintProviderID { get { return Convert.ToInt32(Setting("LabelPrintProviderID", "-1", false)); } }
+
 		#endregion
 
         #region Event Handlers
@@ -191,7 +194,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     //
                     // If we have the CCCEV check-in library, provide a re-print button.
                     //
-                    if (hasCCCEV)
+                    if (hasCCCEV && LabelPrintProviderID != -1)
                     {
                         html += "<span class=\"smallText\"><a href=\"" + csm.GetPostBackClientHyperlink(lbReprint, null) + "\">Reprint</a> labels for " + drv["first_name"] + "<br /></span>";
                         html += "<br />";
@@ -722,21 +725,10 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 cs = (ComputerSystem)mi_GetCurrentKiosk.Invoke(null, new String[] { Request.ServerVariables["REMOTE_ADDR"] });
                 if (cs != null)
                 {
-                    int provider;
-
-                    try
-                    {
-                        provider = Convert.ToInt32(ArenaContext.Current.Organization.Settings["Cccev.PrintLabelDefaultSystemID"]);
-                    }
-                    catch
-                    {
-                        provider = -1;
-                    }
-
                     //
                     // Try to print the person's name tags again.
                     //
-                    object[] parameters = new object[] { provider , member, list, oa, cs };
+                    object[] parameters = new object[] { LabelPrintProviderID , member, list, oa, cs };
                     status = (Boolean)mi_Print.Invoke(null, parameters);
                 }
             }

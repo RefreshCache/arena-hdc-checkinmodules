@@ -208,7 +208,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 						//
 						// Check if the security code is already posted.
 						//
-						securityNumber = drv["security_code"].ToString().Substring(2);
+						securityNumber = drv["security_code"].ToString().Substring(2).Trim();
 						if (FindPromotionRequest(Convert.ToInt32(drv["occurrence_attendance_id"])) != -1)
 							html = html + "<span class=\"smallText\">Remove security number <a href=\"" + csm.GetPostBackClientHyperlink(lbPost, null) + "\">" + securityNumber + "</a><br /></span>";
 						else

@@ -806,10 +806,13 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
 
             
             //
-            // Switch the panels around for what is visible.
+            // Switch the panels around for what is visible. The css hack works around
+            // some strange bug that causes the drop down lists to lose their current
+            // selection. Long term fix I could store that data in session state or
+            // something.
             //
-            pnlFamily.Visible = false;
-            pnlFamilyFriend.Visible = false;
+            pnlFamily.Style.Add("display", "none");
+            pnlFamilyFriend.Style.Add("display", "none");
             pnlFindFamily.Visible = false;
             pnlFindResults.Visible = false;
             pnlTagMembership.Visible = true;
@@ -833,8 +836,8 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
             //
             // Switch the panels around for what is visible.
             //
-            pnlFamily.Visible = true;
-            pnlFamilyFriend.Visible = (FriendRelationshipIDSetting != -1);
+            pnlFamily.Style.Remove("display");
+            pnlFamilyFriend.Style.Remove("display");
             pnlFindFamily.Visible = AllowSearchSetting;
             pnlFindResults.Visible = false;
             pnlTagMembership.Visible = false;

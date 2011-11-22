@@ -326,6 +326,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 {
                     fm = new FamilyMember();
                     f.FamilyMembers.Add(fm);
+                    fm.RecordStatus = Arena.Enums.RecordStatus.Active;
                 }
 
                 //
@@ -335,8 +336,6 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                     fm.Campus = new Campus(NewMemberCampusSetting);
                 if (fm.MemberStatus == null || fm.MemberStatus.LookupID == -1)
                     fm.MemberStatus = new Lookup(NewMemberStatusSetting);
-                if (fm.RecordStatus == Arena.Enums.RecordStatus.Undefined)
-                    fm.RecordStatus = Arena.Enums.RecordStatus.Pending;
 
                 //
                 // Save the person's name information.
@@ -599,7 +598,7 @@ namespace ArenaWeb.UserControls.Custom.HDC.CheckIn
                 if (NewMemberCampusSetting != -1)
                     fm.Campus = new Campus(NewMemberCampusSetting);
                 fm.MemberStatus = new Lookup(NewMemberStatusSetting);
-                fm.RecordStatus = Arena.Enums.RecordStatus.Pending;
+                fm.RecordStatus = Arena.Enums.RecordStatus.Active;
 
                 //
                 // Save the person's name information.

@@ -13,6 +13,7 @@
     <RootNamespace>ArenaWeb.UserControls.Custom.HDC.CheckIn</RootNamespace>
     <AssemblyName>ArenaWeb.UserControls.Custom.Church.Test</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <UseIISExpress>false</UseIISExpress>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -73,6 +74,8 @@
     <Content Include="Include\menuStyle.css" />
     <Content Include="Include\tag_button.png" />
     <Content Include="Include\transparent.gif" />
+    <Content Include="PrintBackupLabels.ascx" />
+    <Content Include="PrinterTest.ascx" />
     <Content Include="Scripts\hdcHoverPopup.js" />
     <Content Include="ServiceBuilder.ascx" />
     <Content Include="Scripts\ServiceBuilder.js" />
@@ -119,6 +122,20 @@
     </Compile>
     <Compile Include="FrequencyLocations.ascx.designer.cs">
       <DependentUpon>FrequencyLocations.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="PrintBackupLabels.ascx.cs">
+      <DependentUpon>PrintBackupLabels.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PrintBackupLabels.ascx.designer.cs">
+      <DependentUpon>PrintBackupLabels.ascx</DependentUpon>
+    </Compile>
+    <Compile Include="PrinterTest.ascx.cs">
+      <DependentUpon>PrinterTest.ascx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="PrinterTest.ascx.designer.cs">
+      <DependentUpon>PrinterTest.ascx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServiceBuilder.ascx.cs">

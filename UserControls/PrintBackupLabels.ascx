@@ -1,4 +1,4 @@
-<%@ Control Language="C#" AutoEventWireup="true" CodeFile="PrintBackupLabels.ascx.cs" Inherits="ArenaWeb.UserControls.Custom.HDC.CheckIn.PrintBackupLabels" %>
+<%@ Control Language="C#" AutoEventWireup="true" CodeFile="PrintBackupLabels.ascx.cs" CodeBehind="PrintBackupLabels.ascx.cs" Inherits="ArenaWeb.UserControls.Custom.HDC.CheckIn.PrintBackupLabels" %>
 <%@ Register TagPrefix="Arena" Namespace="Arena.Portal.UI" Assembly="Arena.Portal.UI" %>
 
 Starting security code: <asp:TextBox ID="tbStartingNumber" runat="server"></asp:TextBox><br />
